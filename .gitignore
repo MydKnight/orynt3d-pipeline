@@ -1,0 +1,14 @@
+# Output files (generated, not source)
+*.json
+!example_*.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
