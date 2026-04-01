@@ -106,29 +106,19 @@ export const lootStudiosProfile: SubscriptionProfile = {
       console.warn(`[LootStudios] Could not extract scale from root folder: ${rootName}`)
     }
 
-    // Level 1: inner folder with same name as root (common LootStudios wrapping)
-    // We look one level deep for All_{Category}_... folders
-    const walk = async (dir: string, depth: number): Promise<void> => {
+    // resolveClassifyRoot already unwrapped to All_{Pack}_{Scale}/.
+    // Every direct child here should be a category folder: All_{Category}_{Pack}_{Scale}/
+    const walkCategories = async (dir: string): Promise<void> => {
       const entries = await readdir(dir, { withFileTypes: true })
       for (const entry of entries) {
         if (!entry.isDirectory()) continue
         const fullPath = join(dir, entry.name)
-
-        if (depth === 0) {
-          // Could be the redundant inner "All_{Pack}_{Scale}" wrapper — descend into it
-          await walk(fullPath, depth + 1)
+        const category = extractCategory(entry.name)
+        if (!category) {
+          console.warn(`[LootStudios] Unrecognised category folder: ${entry.name}`)
           continue
         }
-
-        if (depth === 1) {
-          // Expect All_{Category}_{Pack}_{Scale} folders
-          const category = extractCategory(entry.name)
-          if (!category) {
-            console.warn(`[LootStudios] Unrecognised category folder: ${entry.name}`)
-            continue
-          }
-          await walkSupportType(fullPath, category)
-        }
+        await walkSupportType(fullPath, category)
       }
     }
 
@@ -170,7 +160,7 @@ export const lootStudiosProfile: SubscriptionProfile = {
       }
     }
 
-    await walk(rootFolder, 0)
+    await walkCategories(rootFolder)
     return models
   },
 }

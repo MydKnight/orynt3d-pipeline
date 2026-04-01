@@ -14,6 +14,8 @@ export interface ClassifiedModel {
   sourceFolder: string
   /** STL/3MF files found inside sourceFolder */
   files: string[]
+  /** Content tags added interactively by the user (e.g. "male", "human", "warlock") */
+  userTags?: string[]
 }
 
 export interface ProfileFilter {

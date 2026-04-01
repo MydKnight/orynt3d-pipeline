@@ -6,6 +6,7 @@ import { extractZip } from './pipeline/extractor.js'
 import { classify } from './pipeline/classifier.js'
 import { applyFilter } from './pipeline/filter.js'
 import { reviewConflicts } from './pipeline/reviewer.js'
+import { tagModels } from './pipeline/tagger.js'
 import { reorganize } from './pipeline/reorganizer.js'
 
 // ─── Load .env ────────────────────────────────────────────────────────────────
@@ -92,7 +93,12 @@ async function main(): Promise<void> {
       return
     }
 
-    // 7. Preview + confirm
+    // 7. Interactive tagging
+    console.log(`\nTag each model. Structural tags are applied automatically.`)
+    console.log(`Press Enter to skip a model (structural tags only).\n`)
+    await tagModels(finalModels)
+
+    // 8. Preview + confirm
     const packSummary = new Map<string, number>()
     for (const m of finalModels) {
       const key = `${m.packName} (${m.scale})`
@@ -109,7 +115,7 @@ async function main(): Promise<void> {
         type: 'confirm',
         name: 'confirm',
         message: 'Proceed?',
-        default: true,
+        default: false,
       },
     ])
 

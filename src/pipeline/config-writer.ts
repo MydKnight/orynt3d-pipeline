@@ -128,6 +128,7 @@ export async function writeModelConfig(
     model.scale,
     printType,
     supportTag,
+    ...(model.userTags ?? []),
   ]
 
   const config = buildConfig({
