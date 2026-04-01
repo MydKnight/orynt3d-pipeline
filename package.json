@@ -1,0 +1,27 @@
+{
+  "name": "orynt3d-pipeline",
+  "version": "0.1.0",
+  "description": "Subscription-aware pipeline that reorganizes 3D model downloads into Orynt3D's folder structure",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "pipeline": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0",
+    "inquirer": "^12.0.0",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.0.0",
+    "@types/unzipper": "^0.10.10",
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "vitest": "^3.0.0"
+  }
+}

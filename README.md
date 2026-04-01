@@ -1,17 +1,36 @@
 # orynt3d-pipeline
 
-**Status: Planned — skeleton only. Full planning session required before any implementation.**
+A subscription-aware file processing pipeline that takes raw 3D model subscription downloads and reorganizes them into the folder structure Orynt3D expects — with `orynt3d.config` metadata files pre-generated so models come in tagged and ready to browse.
 
-A file processing pipeline that takes raw 3D model subscription downloads — each with their own inconsistent folder structures, file formats, and naming conventions — and reorganizes them into the folder structure that [Orynt3D](https://orynt3d.com/) expects for scanning and cataloguing.
+## Current Status
 
-## Concept
+**Active — design complete, implementation not yet started.**
 
-- Point the tool at a freshly-downloaded subscription release (zip or folder)
-- Detect the subscription source and apply the appropriate processing profile
-- Classify files by scale (28/32mm vs 75mm), file type (STL vs 3MF), and support status (pre-supported vs unsupported)
-- Reorganize into Orynt3D's target folder structure: `Manufacturer / Pack / SupportStatus / Scale / Category`
-- Handle edge cases (mixed-scale packs, unrecognized structures) with a review/manual step rather than silently dropping files
-- Output is a folder ready for Orynt3D to scan, preview, and import
+The architecture has been fully designed (see `CLAUDE.md`). The existing Python script in `scripts/` is reference material only and is not part of the pipeline build.
+
+**Known gaps:** No implementation code. No tests. `package.json` and project structure not yet created.
+
+## What It Does
+
+```
+[Subscription ZIP in Downloads]
+         ↓
+  orynt3d-pipeline
+  ├── Extracts the ZIP
+  ├── Identifies the subscription (LootStudios, Flesh of Gods, etc.)
+  ├── Classifies every model: pack, scale, category, support type
+  ├── Filters to only the wanted variant (e.g. ReadyToSlice resin)
+  ├── Asks interactively when a model has both FDM and resin variants
+  ├── Asks interactively about anything that can't be auto-classified
+  ├── Writes an organized folder structure to the NAS
+  └── Generates orynt3d.config files so Orynt3D picks up metadata automatically
+         ↓
+  \\NAS\3D Files\{Subscription}\{Pack_Scale}\{Category}\{Model Name}\
+         ↓
+  Orynt3D scans the subscription folder → models appear in library tagged and ready
+```
+
+Each subscription has a **profile** — a set of rules that teaches the pipeline how to interpret that creator's ZIP structure and map it to the normalized output. Adding a new subscription means writing a new profile module.
 
 ## Where This Lives in the Pipeline
 
@@ -20,28 +39,72 @@ A file processing pipeline that takes raw 3D model subscription downloads — ea
         ↓
   orynt3d-pipeline        ← this project
         ↓
-     Orynt3D (desktop app — scan, preview, config.orynt3d per model)
+     Orynt3D (desktop app — scans folder, catalogues models)
         ↓
   3dModelsBrowser (web gallery — searchable from anywhere)
 ```
 
-## What Exists Now
+## Tech Stack
 
-`scripts/orynt3d_import_script.py` — a Python skeleton that scans an already-organized NAS directory for `.stl/.obj/.fbx/.3mf` files, extracts metadata from folder paths, and produces a structured JSON manifest. This is an early partial implementation — it handles the scanning side but not the download intake or reorganization logic.
+- **Node.js / TypeScript**
+- **inquirer** — interactive TUI for review/classification decisions
+- **unzipper** — ZIP extraction
+- **fs-extra** — file system operations
+- **Vitest** — tests
 
-## ⚠️ Do Not Start Building Without a Full Planning Session
+## Supported Subscriptions
 
-This project has significant design questions that need to be resolved before real implementation begins.
+| Subscription | Status |
+|---|---|
+| Loot Studios | Profile #1 — MVP |
+| Flesh of Gods | Planned (profile #2) |
+| Archvillain Games | Future |
+| DM Stash | Future |
+| Rescue Miniatures | Future |
+| Witchsong Miniatures | Future |
 
-See `CLAUDE.md` for the required first step when opening this project.
+## Setup
 
-## Known Open Questions (pre-planning)
+> Setup instructions will be added when the project is initialized.
 
-- Which subscription sources need profiles? (folder structures, zip conventions, naming patterns vary per creator)
-- Does Orynt3D accept a bulk JSON import to register models, or is triggering a folder scan the only intake path?
-- Scale detection — is scale reliably in folder names, file names, or a readme? Or does it require per-subscription rules?
-- FDM vs resin classification — same question
-- 3MF vs STL — keep both, prefer one, or filter by type?
-- What's the target NAS folder structure Orynt3D expects exactly?
-- Should the pipeline be a CLI tool, a GUI, or a drag-and-drop Electron app?
-- Review/override step — what does the UX for unclassified or ambiguous files look like?
+Requirements:
+- Node.js 22.5+ (uses built-in `node:sqlite` for future tracking)
+- NAS accessible via UNC path or mapped drive
+- `.env` file with `NAS_3D_FILES_PATH` and `STAGING_PATH` (see `.env.example`)
+
+## Usage
+
+> CLI usage will be documented once implemented.
+
+Basic flow:
+```
+npm run pipeline -- --zip "C:\Users\shilo\Downloads\ALL_GREENBROOKEINVASION_32MM.zip"
+```
+
+The tool will ask which subscription the ZIP is from, then walk through classification interactively.
+
+## Roadmap
+
+**v1 — MVP**
+- [ ] Project initialization (TypeScript, Vitest, package.json)
+- [ ] Core interfaces (SubscriptionProfile, ClassifiedModel)
+- [ ] LootStudios profile with extraction rules + tests
+- [ ] ZIP extraction
+- [ ] Classification engine
+- [ ] Variant filter (ReadyToSlice; FDM interrogation)
+- [ ] Interactive TUI for review queue
+- [ ] NAS output (organized folder structure)
+- [ ] orynt3d.config generation (subscription, pack, model level)
+
+**v2 — Tracking**
+- [ ] SQLite import tracking (what's been processed, when)
+- [ ] Duplicate detection (skip packs already imported)
+
+**v3 — Automation**
+- [ ] Download automation (detect missing months, fetch them)
+- [ ] Flesh of Gods profile
+- [ ] Additional subscription profiles
+
+**Future**
+- [ ] Orynt3D scan trigger (if API/CLI becomes available)
+- [ ] Migration helper for existing per-month Orynt3D source structure

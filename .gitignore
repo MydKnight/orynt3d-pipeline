@@ -1,6 +1,17 @@
-# Output files (generated, not source)
-*.json
-!example_*.json
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment (contains real NAS paths)
+.env
+
+# Temp extraction folder
+temp/
+
+# Generated import manifests (old Python script output)
+orynt3d_import.json
 
 # Python
 __pycache__/
