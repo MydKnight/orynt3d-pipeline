@@ -124,7 +124,7 @@ export async function writeModelConfig(
   const supportTag = model.supportType === 'ReadyToSlice' ? 'pre-supported' : model.supportType.toLowerCase()
 
   const tags = [
-    model.category.toLowerCase(),
+    ...(model.classificationTag ? [model.classificationTag] : []),
     model.scale,
     printType,
     supportTag,

@@ -85,9 +85,17 @@ export const lootStudiosProfile: SubscriptionProfile = {
     includeFDM: true,
   },
 
-  formatPackFolder(packName: string, scale: string): string {
-    // e.g. "Greenbrooke Invasion" + "32mm" → "GreenbrookeInvasion_32mm"
-    return packName.replace(/ /g, '') + '_' + scale
+  categoryMappings: {
+    Heroes:      { tag: 'hero' },
+    Prop:        { tag: 'prop' },
+    Enemies:     { options: ['monster', 'npc'] },
+    Environment: { options: ['terrain', 'scatter', 'building'] },
+  },
+
+  includesImages: false,
+
+  formatPackFolder(packName: string, _scale: string): string {
+    return packName
   },
 
   formatModelFolder(modelName: string): string {

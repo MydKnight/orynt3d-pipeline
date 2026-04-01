@@ -40,10 +40,23 @@ export async function reorganize(
         writtenPackConfigs.add(packFolder)
       }
 
-      // Copy model files into the model folder
+      // Copy 3D model files
       for (const srcFile of model.files) {
         const filename = srcFile.split(/[\\/]/).at(-1)!
         await copy(srcFile, join(modelFolder, filename), { overwrite: false })
+      }
+
+      // Copy images if the subscription includes them in model folders
+      if (profile.includesImages) {
+        const { readdir } = await import('node:fs/promises')
+        const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp'])
+        const entries = await readdir(model.sourceFolder, { withFileTypes: true })
+        for (const entry of entries) {
+          if (!entry.isFile()) continue
+          const ext = entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase()
+          if (!IMAGE_EXTS.has(ext)) continue
+          await copy(join(model.sourceFolder, entry.name), join(modelFolder, entry.name), { overwrite: false })
+        }
       }
 
       await writeModelConfig(modelFolder, model)

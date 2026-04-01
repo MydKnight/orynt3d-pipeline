@@ -1,15 +1,26 @@
 export type SupportType = 'ReadyToSlice' | 'Lychee' | 'Unsupported' | 'FDM'
 
+export type ClassificationTag = 'hero' | 'monster' | 'npc' | 'terrain' | 'scatter' | 'building' | 'prop'
+
+export interface CategoryMapping {
+  /** Auto-assign this tag — no prompt needed */
+  tag?: ClassificationTag
+  /** Prompt user to choose from these options */
+  options?: ClassificationTag[]
+}
+
 export interface ClassifiedModel {
   /** e.g. "Greenbrooke Invasion" */
   packName: string
   /** e.g. "32mm" | "75mm" */
   scale: string
-  /** e.g. "Enemies" | "Heroes" | "Environment" | "Prop" */
+  /** Raw category name from the subscription's folder structure e.g. "Enemies" | "Heroes" */
   category: string
   /** Clean display name, title-cased, no scale/support suffixes — e.g. "Battering Beast" */
   modelName: string
   supportType: SupportType
+  /** Normalized classification tag assigned during tagging step */
+  classificationTag?: ClassificationTag
   /** Absolute path to the model's folder in the extracted temp directory */
   sourceFolder: string
   /** STL/3MF files found inside sourceFolder */
@@ -33,6 +44,21 @@ export interface SubscriptionProfile {
   name: string
 
   /**
+   * Maps the subscription's raw category folder names to classification tags.
+   * Auto-mapped categories need no user prompt.
+   * Option-mapped categories prompt the user to choose.
+   * Unknown categories fall through to a full-vocabulary prompt.
+   */
+  categoryMappings: Record<string, CategoryMapping>
+
+  /**
+   * Whether the subscription's ZIP includes images inside model folders.
+   * If true, the reorganizer copies them automatically.
+   * If false, the pipeline optionally asks for an image URL per model.
+   */
+  includesImages: boolean
+
+  /**
    * Walk the extracted download root folder and return a ClassifiedModel for every
    * leaf model folder found. Unrecognised folders should be omitted and logged —
    * the pipeline's review step handles the residue.
@@ -41,7 +67,7 @@ export interface SubscriptionProfile {
 
   filter: ProfileFilter
 
-  /** Format the pack-level NAS folder name from extracted pack + scale */
+  /** Format the pack-level NAS folder name */
   formatPackFolder(packName: string, scale: string): string
 
   /** Format the model-level NAS folder name from the clean model name */

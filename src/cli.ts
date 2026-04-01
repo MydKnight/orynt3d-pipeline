@@ -96,7 +96,7 @@ async function main(): Promise<void> {
     // 7. Interactive tagging
     console.log(`\nTag each model. Structural tags are applied automatically.`)
     console.log(`Press Enter to skip a model (structural tags only).\n`)
-    await tagModels(finalModels)
+    await tagModels(finalModels, profile)
 
     // 8. Preview + confirm
     const packSummary = new Map<string, number>()
