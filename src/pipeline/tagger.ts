@@ -111,4 +111,33 @@ export async function tagModels(
   }
 
   console.log()
+
+  // ── Phase 3: images ───────────────────────────────────────────────────────
+
+  if (!profile.includesImages) {
+    console.log('── Images (Enter to skip, "done" to skip remaining) ────────')
+
+    for (const [, group] of byCategory) {
+      for (const model of group) {
+        const { url } = await inquirer.prompt<{ url: string }>([
+          {
+            type: 'input',
+            name: 'url',
+            message: `  ${model.modelName}  image URL:`,
+          },
+        ])
+
+        const trimmed = url.trim()
+        if (trimmed.toLowerCase() === 'done') {
+          console.log('  Skipping remaining images.')
+          return
+        }
+        if (trimmed.length > 0) {
+          model.imageUrl = trimmed
+        }
+      }
+    }
+
+    console.log()
+  }
 }

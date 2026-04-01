@@ -59,6 +59,21 @@ export async function reorganize(
         }
       }
 
+      // Fetch image from URL if provided
+      if (model.imageUrl) {
+        try {
+          const res = await fetch(model.imageUrl)
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          const ext = model.imageUrl.split('?')[0].split('.').at(-1) ?? 'jpg'
+          const imgPath = join(modelFolder, `cover.${ext}`)
+          const { writeFile } = await import('node:fs/promises')
+          const buf = Buffer.from(await res.arrayBuffer())
+          await writeFile(imgPath, buf)
+        } catch (err) {
+          console.warn(`  [image] Failed to fetch for ${model.modelName}: ${err}`)
+        }
+      }
+
       await writeModelConfig(modelFolder, model)
       written++
     } catch (err) {

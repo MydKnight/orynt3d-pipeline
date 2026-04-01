@@ -27,6 +27,8 @@ export interface ClassifiedModel {
   files: string[]
   /** Content tags added interactively by the user (e.g. "male", "human", "warlock") */
   userTags?: string[]
+  /** Image URL provided during tagging — fetched and saved to model folder by reorganizer */
+  imageUrl?: string
 }
 
 export interface ProfileFilter {
