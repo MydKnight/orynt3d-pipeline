@@ -10,6 +10,9 @@ dist/
 # Temp extraction folder
 temp/
 
+# Saved tagging sessions (contain personal tag data, not source)
+sessions/
+
 # Generated import manifests (old Python script output)
 orynt3d_import.json
 

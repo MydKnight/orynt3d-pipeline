@@ -7,6 +7,7 @@ import { classify } from './pipeline/classifier.js'
 import { applyFilter } from './pipeline/filter.js'
 import { reviewConflicts } from './pipeline/reviewer.js'
 import { tagModels } from './pipeline/tagger.js'
+import { saveSession, loadSession, hasSession } from './pipeline/session.js'
 import { reorganize } from './pipeline/reorganizer.js'
 
 // ─── Load .env ────────────────────────────────────────────────────────────────
@@ -65,8 +66,9 @@ async function main(): Promise<void> {
   const profile = getProfile(profileName)!
 
   // 3. Extract
+  const resolvedZipPath = resolve(zipPath.trim())
   console.log('\nExtracting ZIP...')
-  const { extractedRoot, cleanup } = await extractZip(resolve(zipPath.trim()))
+  const { extractedRoot, cleanup } = await extractZip(resolvedZipPath)
 
   try {
     // 4. Classify
@@ -93,10 +95,33 @@ async function main(): Promise<void> {
       return
     }
 
-    // 7. Interactive tagging
-    console.log(`\nTag each model. Structural tags are applied automatically.`)
-    console.log(`Press Enter to skip a model (structural tags only).\n`)
-    await tagModels(finalModels, profile)
+    // 7. Interactive tagging — load saved session or prompt
+    let sessionLoaded = false
+
+    if (await hasSession(resolvedZipPath)) {
+      const { useSession } = await inquirer.prompt<{ useSession: boolean }>([
+        {
+          type: 'confirm',
+          name: 'useSession',
+          message: 'Saved tagging session found for this ZIP. Load it?',
+          default: true,
+        },
+      ])
+      if (useSession) {
+        await loadSession(resolvedZipPath, finalModels)
+        sessionLoaded = true
+      }
+    }
+
+    if (!sessionLoaded) {
+      console.log(`\nTag each model. Structural tags are applied automatically.`)
+      console.log(`Press Enter to skip a model (structural tags only).\n`)
+      await tagModels(finalModels, profile)
+    }
+
+    // Save session immediately after tagging — before confirm
+    const savedPath = await saveSession(resolvedZipPath, profileName, finalModels)
+    console.log(`Session saved to ${savedPath}`)
 
     // 8. Preview + confirm
     const packSummary = new Map<string, number>()
