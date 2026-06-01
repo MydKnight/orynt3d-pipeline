@@ -1,15 +1,22 @@
 import { createReadStream } from 'node:fs'
-import { mkdir, rm } from 'node:fs/promises'
+import { stat, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import unzipper from 'unzipper'
 
 /**
- * Extract a ZIP file to a temp folder.
- * Returns the path to the extracted root folder.
- * Caller is responsible for cleanup (call cleanupExtract when done).
+ * Extract a ZIP file to a temp folder, or use the folder directly if a directory is given.
+ * Returns the path to the extracted root folder and a cleanup function.
  */
 export async function extractZip(zipPath: string): Promise<{ extractedRoot: string; cleanup: () => Promise<void> }> {
+  const info = await stat(zipPath)
+  if (info.isDirectory()) {
+    return {
+      extractedRoot: zipPath,
+      cleanup: async () => {},
+    }
+  }
+
   const tempDir = join(tmpdir(), `orynt3d-${Date.now()}`)
   await mkdir(tempDir, { recursive: true })
 

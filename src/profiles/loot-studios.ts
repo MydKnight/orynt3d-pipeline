@@ -105,8 +105,21 @@ export const lootStudiosProfile: SubscriptionProfile = {
   async classify(rootFolder: string): Promise<ClassifiedModel[]> {
     const models: ClassifiedModel[] = []
 
+    // LootStudios ZIPs extract to an ALL-CAPS outer folder wrapping an inner properly-cased folder.
+    // Unwrap one level if there is exactly one subdirectory inside.
+    const resolvedRoot = await (async () => {
+      const entries = await readdir(rootFolder, { withFileTypes: true })
+      const dirs = entries.filter(e => e.isDirectory())
+      if (dirs.length === 1) {
+        const inner = join(rootFolder, dirs[0].name)
+        const innerEntries = await readdir(inner, { withFileTypes: true })
+        if (innerEntries.some(e => e.isDirectory())) return inner
+      }
+      return rootFolder
+    })()
+
     // Root folder name tells us pack + scale
-    const rootName = rootFolder.split(/[\\/]/).at(-1) ?? ''
+    const rootName = resolvedRoot.split(/[\\/]/).at(-1) ?? ''
     const scale = extractScale(rootName)
     const packName = extractPackName(rootName)
 
@@ -114,7 +127,6 @@ export const lootStudiosProfile: SubscriptionProfile = {
       console.warn(`[LootStudios] Could not extract scale from root folder: ${rootName}`)
     }
 
-    // resolveClassifyRoot already unwrapped to All_{Pack}_{Scale}/.
     // Every direct child here should be a category folder: All_{Category}_{Pack}_{Scale}/
     const walkCategories = async (dir: string): Promise<void> => {
       const entries = await readdir(dir, { withFileTypes: true })
@@ -168,7 +180,7 @@ export const lootStudiosProfile: SubscriptionProfile = {
       }
     }
 
-    await walkCategories(rootFolder)
+    await walkCategories(resolvedRoot)
     return models
   },
 }

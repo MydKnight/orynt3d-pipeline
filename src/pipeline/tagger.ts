@@ -93,20 +93,52 @@ export async function tagModels(
         .filter(Boolean)
         .join(', ')
 
+      console.log(`\n  [${idx}/${total}] ${model.modelName}  {${hint}}`)
+
+      const structuredTags: string[] = []
+
+      // Structured prompts by classification type
+      if (model.classificationTag === 'monster') {
+        const { cr } = await inquirer.prompt<{ cr: string }>([
+          { type: 'input', name: 'cr', message: '    CR:' },
+        ])
+        const crTrimmed = cr.trim().toLowerCase()
+        if (crTrimmed) {
+          structuredTags.push(crTrimmed.startsWith('cr') ? crTrimmed : `cr${crTrimmed}`)
+        }
+        const { creatureType } = await inquirer.prompt<{ creatureType: string }>([
+          { type: 'input', name: 'creatureType', message: '    Type:' },
+        ])
+        const typeTrimmed = creatureType.trim().toLowerCase()
+        if (typeTrimmed) structuredTags.push(typeTrimmed)
+      } else if (model.classificationTag === 'hero' || model.classificationTag === 'npc') {
+        const answers = await inquirer.prompt<{ race: string; cls: string; gender: string }>([
+          { type: 'input', name: 'race',   message: '    Race:' },
+          { type: 'input', name: 'cls',    message: '    Class:' },
+          { type: 'input', name: 'gender', message: '    Gender:' },
+        ])
+        for (const val of [answers.race, answers.cls, answers.gender]) {
+          const trimmed = val.trim().toLowerCase()
+          if (trimmed) structuredTags.push(trimmed)
+        }
+      }
+
       const { raw } = await inquirer.prompt<{ raw: string }>([
         {
           type: 'input',
           name: 'raw',
-          message: `  [${idx}/${total}] ${model.modelName}  {${hint}}\n    + tags:`,
+          message: '    + tags:',
+          default: model.userTags?.join(', ') ?? '',
         },
       ])
 
-      const tags = raw
+      const freeTags = raw
         .split(',')
         .map(t => t.trim().toLowerCase())
         .filter(t => t.length > 0)
 
-      if (tags.length > 0) model.userTags = tags
+      const allTags = [...new Set([...structuredTags, ...freeTags])]
+      model.userTags = allTags.length > 0 ? allTags : undefined
     }
   }
 

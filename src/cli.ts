@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     {
       type: 'input',
       name: 'zipPath',
-      message: 'Path to ZIP file:',
+      message: 'Path to ZIP file or folder:',
       validate: (v: string) => v.trim().length > 0 || 'Required',
     },
   ])

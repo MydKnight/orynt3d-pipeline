@@ -4,11 +4,11 @@ A subscription-aware file processing pipeline that takes raw 3D model subscripti
 
 ## Current Status
 
-**Active — design complete, implementation not yet started.**
+**Active — v1 complete, running in production.**
 
-The architecture has been fully designed (see `CLAUDE.md`). The existing Python script in `scripts/` is reference material only and is not part of the pipeline build.
+Both v1 profiles (Loot Studios, Flesh of Gods) are implemented, tested, and verified against real downloads. Orynt3D migration to subscription-level sources is complete for both subscriptions.
 
-**Known gaps:** No implementation code. No tests. `package.json` and project structure not yet created.
+**Known gaps:** LootStudios downloads don't include model images — the pipeline prompts for a URL per model during tagging. Automating this (scraping the release page) is a planned v3 improvement.
 
 ## What It Does
 
@@ -22,6 +22,8 @@ The architecture has been fully designed (see `CLAUDE.md`). The existing Python 
   ├── Filters to only the wanted variant (e.g. ReadyToSlice resin)
   ├── Asks interactively when a model has both FDM and resin variants
   ├── Asks interactively about anything that can't be auto-classified
+  ├── Prompts for structured metadata per model type (CR for monsters; race, class, gender for heroes/NPCs)
+  ├── Accepts free-text content tags per model (race, gender, theme, etc.)
   ├── Writes an organized folder structure to the NAS
   └── Generates orynt3d.config files so Orynt3D picks up metadata automatically
          ↓
@@ -56,8 +58,8 @@ Each subscription has a **profile** — a set of rules that teaches the pipeline
 
 | Subscription | Status |
 |---|---|
-| Loot Studios | Profile #1 — MVP |
-| Flesh of Gods | Planned (profile #2) |
+| Loot Studios | ✓ Active |
+| Flesh of Gods | ✓ Active |
 | Archvillain Games | Future |
 | DM Stash | Future |
 | Rescue Miniatures | Future |
@@ -65,36 +67,38 @@ Each subscription has a **profile** — a set of rules that teaches the pipeline
 
 ## Setup
 
-> Setup instructions will be added when the project is initialized.
-
 Requirements:
-- Node.js 22.5+ (uses built-in `node:sqlite` for future tracking)
+- Node.js 22.5+
 - NAS accessible via UNC path or mapped drive
-- `.env` file with `NAS_3D_FILES_PATH` and `STAGING_PATH` (see `.env.example`)
+
+```
+npm install
+cp .env.example .env
+# edit .env — set NAS_3D_FILES_PATH to your NAS path
+```
 
 ## Usage
 
-> CLI usage will be documented once implemented.
-
-Basic flow:
 ```
-npm run pipeline -- --zip "C:\Users\shilo\Downloads\ALL_GREENBROOKEINVASION_32MM.zip"
+npm run pipeline
 ```
 
-The tool will ask which subscription the ZIP is from, then walk through classification interactively.
+The tool prompts for a ZIP path (or pre-extracted folder) and which subscription, then walks through classification and tagging interactively before writing to the NAS.
 
 ## Roadmap
 
-**v1 — MVP**
-- [ ] Project initialization (TypeScript, Vitest, package.json)
-- [ ] Core interfaces (SubscriptionProfile, ClassifiedModel)
-- [ ] LootStudios profile with extraction rules + tests
-- [ ] ZIP extraction
-- [ ] Classification engine
-- [ ] Variant filter (ReadyToSlice; FDM interrogation)
-- [ ] Interactive TUI for review queue
-- [ ] NAS output (organized folder structure)
-- [ ] orynt3d.config generation (subscription, pack, model level)
+**v1 — MVP** ✓ Complete
+- [x] Project initialization (TypeScript, Vitest, package.json)
+- [x] Core interfaces (SubscriptionProfile, ClassifiedModel)
+- [x] LootStudios profile with extraction rules + tests
+- [x] Flesh of Gods profile with extraction rules + tests
+- [x] ZIP extraction (also accepts pre-extracted folders)
+- [x] Classification engine
+- [x] Variant filter (ReadyToSlice; FDM interrogation)
+- [x] Interactive TUI — classification, structured metadata (CR, race/class/gender), free-text tags, image URLs
+- [x] Session save/resume (tagging progress persisted before NAS write)
+- [x] NAS output (organized folder structure)
+- [x] orynt3d.config generation (subscription, pack, model level)
 
 **v2 — Tracking**
 - [ ] SQLite import tracking (what's been processed, when)
@@ -102,9 +106,8 @@ The tool will ask which subscription the ZIP is from, then walk through classifi
 
 **v3 — Automation**
 - [ ] Download automation (detect missing months, fetch them)
-- [ ] Flesh of Gods profile
-- [ ] Additional subscription profiles
+- [ ] LootStudios image automation (fetch render images from release page — currently a manual URL-per-model step)
+- [ ] Additional subscription profiles (Archvillain Games, DM Stash, Rescue Miniatures, Witchsong Miniatures)
 
 **Future**
 - [ ] Orynt3D scan trigger (if API/CLI becomes available)
-- [ ] Migration helper for existing per-month Orynt3D source structure
