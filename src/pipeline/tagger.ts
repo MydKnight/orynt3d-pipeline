@@ -110,8 +110,9 @@ export async function tagModels(
         const { creatureType } = await inquirer.prompt<{ creatureType: string }>([
           { type: 'input', name: 'creatureType', message: '    Type:' },
         ])
-        const typeTrimmed = creatureType.trim().toLowerCase()
-        if (typeTrimmed) structuredTags.push(typeTrimmed)
+        for (const t of creatureType.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)) {
+          structuredTags.push(t)
+        }
       } else if (model.classificationTag === 'hero' || model.classificationTag === 'npc') {
         const answers = await inquirer.prompt<{ race: string; cls: string; gender: string }>([
           { type: 'input', name: 'race',   message: '    Race:' },
@@ -119,8 +120,9 @@ export async function tagModels(
           { type: 'input', name: 'gender', message: '    Gender:' },
         ])
         for (const val of [answers.race, answers.cls, answers.gender]) {
-          const trimmed = val.trim().toLowerCase()
-          if (trimmed) structuredTags.push(trimmed)
+          for (const t of val.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)) {
+            structuredTags.push(t)
+          }
         }
       }
 
