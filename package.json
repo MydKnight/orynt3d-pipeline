@@ -8,6 +8,7 @@
   },
   "scripts": {
     "pipeline": "tsx src/cli.ts",
+    "download": "tsx src/cli-download.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -20,8 +21,8 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.0.0",
     "@types/unzipper": "^0.10.10",
-    "typescript": "^5.7.0",
     "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
 }

@@ -16,6 +16,15 @@ sessions/
 # Generated import manifests (old Python script output)
 orynt3d_import.json
 
+# Pipeline database (local tracking state — not source)
+data/
+
+# Saved browser sessions (contain auth cookies — never commit)
+.sessions/
+
+# Debug HTML dumps from scraper runs
+debug/
+
 # Python
 __pycache__/
 *.pyc

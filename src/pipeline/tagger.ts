@@ -95,6 +95,7 @@ export async function tagModels(
 
       console.log(`\n  [${idx}/${total}] ${model.modelName}  {${hint}}`)
 
+      const profileTags = model.userTags ?? []   // e.g. size tag set by FoG classifier
       const structuredTags: string[] = []
 
       // Structured prompts by classification type
@@ -128,7 +129,6 @@ export async function tagModels(
           type: 'input',
           name: 'raw',
           message: '    + tags:',
-          default: model.userTags?.join(', ') ?? '',
         },
       ])
 
@@ -137,7 +137,7 @@ export async function tagModels(
         .map(t => t.trim().toLowerCase())
         .filter(t => t.length > 0)
 
-      const allTags = [...new Set([...structuredTags, ...freeTags])]
+      const allTags = [...new Set([...profileTags, ...structuredTags, ...freeTags])]
       model.userTags = allTags.length > 0 ? allTags : undefined
     }
   }

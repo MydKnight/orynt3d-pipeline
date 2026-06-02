@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import inquirer from 'inquirer'
 import { getProfileNames, getProfile } from './profiles/index.js'
@@ -9,25 +8,8 @@ import { reviewConflicts } from './pipeline/reviewer.js'
 import { tagModels } from './pipeline/tagger.js'
 import { saveSession, loadSession, hasSession } from './pipeline/session.js'
 import { reorganize } from './pipeline/reorganizer.js'
-
-// ─── Load .env ────────────────────────────────────────────────────────────────
-
-async function loadEnv(): Promise<void> {
-  try {
-    const raw = await readFile('.env', 'utf8')
-    for (const line of raw.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#')) continue
-      const eq = trimmed.indexOf('=')
-      if (eq === -1) continue
-      const key = trimmed.slice(0, eq).trim()
-      const value = trimmed.slice(eq + 1).trim()
-      if (!process.env[key]) process.env[key] = value
-    }
-  } catch {
-    // No .env file — rely on environment variables being set
-  }
-}
+import { upsertRelease, markProcessed, getAllReleases, isPackProcessed } from './db/releases.js'
+import { loadEnv } from './util/env.js'
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -74,6 +56,24 @@ async function main(): Promise<void> {
     // 4. Classify
     console.log('Classifying models...')
     const { models } = await classify(extractedRoot, profile)
+
+    const subscriptionKey = profile.name.toLowerCase().replace(/\s+/g, '')
+
+    // Pre-flight: warn if pack appears already processed
+    const firstPackName = models[0]?.packName
+    if (firstPackName) {
+      if (isPackProcessed(subscriptionKey, firstPackName)) {
+        const { proceed } = await inquirer.prompt<{ proceed: boolean }>([
+          {
+            type: 'confirm',
+            name: 'proceed',
+            message: `"${firstPackName}" appears already imported. Import again?`,
+            default: false,
+          },
+        ])
+        if (!proceed) { console.log('Cancelled.'); return }
+      }
+    }
     console.log(`  Found ${models.length} model variants`)
 
     // 5. Filter
@@ -159,6 +159,67 @@ async function main(): Promise<void> {
       console.log(`\n${errors.length} error(s):`)
       for (const { model, error } of errors) {
         console.log(`  ${model.modelName}: ${error}`)
+      }
+    }
+
+    // 9. Mark release as processed in tracking DB
+    if (written > 0) {
+      const packName = finalModels[0]?.packName ?? ''
+
+      // Find unprocessed releases for this subscription — try to match by pack name
+      const known = getAllReleases(subscriptionKey).filter(r => !r.processed_at)
+      const match = known.find(r =>
+        r.release_name.toLowerCase().includes(packName.toLowerCase()) ||
+        packName.toLowerCase().includes(r.release_name.toLowerCase())
+      )
+
+      const choices = known.map(r => ({
+        name: `${r.release_month ?? '????-??'} — ${r.release_name}`,
+        value: r.release_name,
+      }))
+
+      if (choices.length > 0) {
+        const { releaseName } = await inquirer.prompt<{ releaseName: string }>([
+          {
+            type: 'list',
+            name: 'releaseName',
+            message: 'Mark which release as processed in the tracker?',
+            choices: [
+              ...choices,
+              { name: '(skip — don\'t update tracker)', value: '' },
+            ],
+            default: match?.release_name ?? '',
+          },
+        ])
+        if (releaseName) {
+          upsertRelease({ subscription: subscriptionKey, release_name: releaseName, owned: true })
+          markProcessed(subscriptionKey, releaseName, packName)
+          console.log(`Marked "${releaseName}" as processed.`)
+        }
+      } else {
+        // No known releases — create a new entry with month
+        const { track } = await inquirer.prompt<{ track: boolean }>([
+          {
+            type: 'confirm',
+            name: 'track',
+            message: `Add "${packName}" to the release tracker?`,
+            default: true,
+          },
+        ])
+        if (track) {
+          const { releaseMonth } = await inquirer.prompt<{ releaseMonth: string }>([
+            {
+              type: 'input',
+              name: 'releaseMonth',
+              message: 'Release month (YYYY-MM):',
+              default: new Date().toISOString().slice(0, 7),
+              validate: v => /^\d{4}-\d{2}$/.test(v.trim()) || 'Format must be YYYY-MM',
+            },
+          ])
+          upsertRelease({ subscription: subscriptionKey, release_name: packName, release_month: releaseMonth.trim(), owned: true })
+          markProcessed(subscriptionKey, packName, packName)
+          console.log(`Added and marked "${packName}" as processed.`)
+        }
       }
     }
   } finally {

@@ -1,4 +1,5 @@
 import { ensureDir, copy } from 'fs-extra'
+import { readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ClassifiedModel, SubscriptionProfile } from '../profiles/types.js'
 import {
@@ -48,7 +49,6 @@ export async function reorganize(
 
       // Copy images if the subscription includes them in model folders
       if (profile.includesImages) {
-        const { readdir } = await import('node:fs/promises')
         const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp'])
         const entries = await readdir(model.sourceFolder, { withFileTypes: true })
         for (const entry of entries) {
@@ -64,9 +64,11 @@ export async function reorganize(
         try {
           const res = await fetch(model.imageUrl)
           if (!res.ok) throw new Error(`HTTP ${res.status}`)
-          const ext = model.imageUrl.split('?')[0].split('.').at(-1) ?? 'jpg'
+          const urlPath = model.imageUrl.split('?')[0]
+          const lastSegment = urlPath.split('/').at(-1) ?? ''
+          const extMatch = lastSegment.match(/\.([a-zA-Z0-9]{1,5})$/)
+          const ext = extMatch?.[1] ?? 'jpg'
           const imgPath = join(modelFolder, `cover.${ext}`)
-          const { writeFile } = await import('node:fs/promises')
           const buf = Buffer.from(await res.arrayBuffer())
           await writeFile(imgPath, buf)
         } catch (err) {

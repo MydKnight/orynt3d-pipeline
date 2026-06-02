@@ -100,14 +100,15 @@ The tool prompts for a ZIP path (or pre-extracted folder) and which subscription
 - [x] NAS output (organized folder structure)
 - [x] orynt3d.config generation (subscription, pack, model level)
 
-**v2 — Tracking**
-- [ ] SQLite import tracking (what's been processed, when)
-- [ ] Duplicate detection (skip packs already imported)
+**v2 — Tracking** ✓ Complete
+- [x] SQLite release tracking — 4 states (imported / downloaded / owned / not-owned) per subscription
+- [x] Pipeline integration — prompts to mark release processed after NAS write; warns on duplicate import
+- [x] `npm run download` tracker CLI — status, list, backfill historical imports, manual ownership
 
 **v3 — Automation**
-- [ ] Download automation (detect missing months, fetch them)
-- [ ] LootStudios image automation (fetch render images from release page — currently a manual URL-per-model step)
-- [ ] Additional subscription profiles (Archvillain Games, DM Stash, Rescue Miniatures, Witchsong Miniatures)
+- [ ] Download automation — LootStudios (SPA + signed CDN URL, blocked), FoG direct site (investigate), DM Stash (own site, investigate)
+- [ ] LootStudios image automation (fetch render images from release page — currently manual URL-per-model)
+- [ ] Additional subscription profiles (Rescale, DM Stash, Archvillain Games, Witchsong Miniatures)
 
 **Future**
 - [ ] Orynt3D scan trigger (if API/CLI becomes available)
