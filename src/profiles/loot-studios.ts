@@ -102,7 +102,7 @@ export const lootStudiosProfile: SubscriptionProfile = {
     return modelName
   },
 
-  async classify(rootFolder: string): Promise<ClassifiedModel[]> {
+  async classify(rootFolder: string, _originalInputPath?: string): Promise<ClassifiedModel[]> {
     const models: ClassifiedModel[] = []
 
     // LootStudios ZIPs extract to an ALL-CAPS outer folder wrapping an inner properly-cased folder.

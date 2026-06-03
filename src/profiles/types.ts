@@ -29,6 +29,12 @@ export interface ClassifiedModel {
   userTags?: string[]
   /** Image URL provided during tagging — fetched and saved to model folder by reorganizer */
   imageUrl?: string
+  /**
+   * Override folder for image copying. When set, reorganizer copies images from here
+   * instead of sourceFolder. Used when images live in a subfolder (e.g. Renders/)
+   * or at a parent level (e.g. shared Pack group image).
+   */
+  imageSourceFolder?: string
 }
 
 export interface ProfileFilter {
@@ -65,7 +71,7 @@ export interface SubscriptionProfile {
    * leaf model folder found. Unrecognised folders should be omitted and logged —
    * the pipeline's review step handles the residue.
    */
-  classify(rootFolder: string): Promise<ClassifiedModel[]>
+  classify(rootFolder: string, originalInputPath?: string): Promise<ClassifiedModel[]>
 
   filter: ProfileFilter
 

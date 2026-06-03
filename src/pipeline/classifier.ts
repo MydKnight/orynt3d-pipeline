@@ -8,7 +8,8 @@ export interface ClassificationResult {
 export async function classify(
   extractedRoot: string,
   profile: SubscriptionProfile,
+  originalInputPath?: string,
 ): Promise<ClassificationResult> {
-  const models = await profile.classify(extractedRoot)
+  const models = await profile.classify(extractedRoot, originalInputPath)
   return { models, usedRoot: extractedRoot }
 }

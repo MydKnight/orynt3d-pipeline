@@ -116,7 +116,7 @@ export const fleshOfGodsProfile: SubscriptionProfile = {
     return modelName
   },
 
-  async classify(rootFolder: string): Promise<ClassifiedModel[]> {
+  async classify(rootFolder: string, _originalInputPath?: string): Promise<ClassifiedModel[]> {
     const models: ClassifiedModel[] = []
 
     const rootName = rootFolder.split(/[\\/]/).at(-1) ?? ''

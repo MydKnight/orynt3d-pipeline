@@ -50,12 +50,12 @@ async function main(): Promise<void> {
   // 3. Extract
   const resolvedZipPath = resolve(zipPath.trim())
   console.log('\nExtracting ZIP...')
-  const { extractedRoot, cleanup } = await extractZip(resolvedZipPath)
+  const { extractedRoot, originalInputPath, cleanup } = await extractZip(resolvedZipPath)
 
   try {
     // 4. Classify
     console.log('Classifying models...')
-    const { models } = await classify(extractedRoot, profile)
+    const { models } = await classify(extractedRoot, profile, originalInputPath)
 
     const subscriptionKey = profile.name.toLowerCase().replace(/\s+/g, '')
 
