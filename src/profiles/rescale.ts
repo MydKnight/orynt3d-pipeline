@@ -66,9 +66,21 @@ async function getFiles(folder: string, exts: Set<string>): Promise<string[]> {
     .map(e => join(folder, e.name))
 }
 
-/** STL/3MF files from the Supported/ subfolder (skips Beefed/). */
+/**
+ * STL/3MF files for a model folder, skipping Beefed variants.
+ * Two structures exist across Rescale releases:
+ * - Subfolder: files live in Supported/ (BlizzardTroll style)
+ * - Flat: files sit directly in the folder with _Sup.stl / _Bef.stl suffixes (VargirMage style)
+ */
 async function getModelFiles(modelFolder: string): Promise<string[]> {
-  return getFiles(join(modelFolder, 'Supported'), MODEL_EXTS)
+  const fromSubfolder = await getFiles(join(modelFolder, 'Supported'), MODEL_EXTS)
+  if (fromSubfolder.length > 0) return fromSubfolder
+
+  const all = await getFiles(modelFolder, MODEL_EXTS)
+  return all.filter(f => {
+    const base = (f.split(/[\\/]/).at(-1) ?? '').replace(/\.[^.]+$/, '')
+    return base.endsWith('_Sup')
+  })
 }
 
 /**

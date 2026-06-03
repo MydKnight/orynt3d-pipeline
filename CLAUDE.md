@@ -286,6 +286,16 @@ Do not accumulate edge-case handlers for one-off typos.
 
 Current state: 46 tests across 4 files — all in-scope areas covered.
 
+## Development Workflow — Required Before Merging Any Feature Branch
+
+Every feature branch must clear these gates **before** merging to master. Claude must not merge autonomously without completing all three steps, even if the code compiles and tests pass.
+
+1. **`/code-review --fix`** — run on the branch and apply any findings before merge
+2. **Manual test run** — run `npm run pipeline` against real sample data and verify the golden path works end-to-end. For pipeline-touching changes, this means pointing the tool at an actual download folder and confirming models are classified, tagged, and written to the NAS correctly. For non-pipeline changes (DB, CLI), exercise the affected commands interactively.
+3. **Confirm with user** — report what was tested and what the outcome was. Wait for explicit go-ahead before merging.
+
+If sample data for a new profile isn't available yet, say so explicitly and ask the user to provide it before the merge gates can be cleared. Do not merge on "tests pass + types clean" alone for pipeline changes.
+
 ## Out of Spec (vs global CLAUDE.md standards)
 
 None currently. All known gaps are documented above.
