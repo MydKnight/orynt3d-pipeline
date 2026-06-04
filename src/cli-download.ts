@@ -1,5 +1,5 @@
 import inquirer from 'inquirer'
-import { getAllReleases, markDownloaded, markOwned, markProcessed, upsertRelease, getStatusSummary } from './db/releases.js'
+import { getAllReleases, markDownloaded, markOwned, markProcessed, upsertRelease, getStatusSummary, getGaps } from './db/releases.js'
 import { loadEnv } from './util/env.js'
 
 function stateLabel(r: ReturnType<typeof getAllReleases>[0]): string {
@@ -35,6 +35,7 @@ async function main(): Promise<void> {
       message: 'What would you like to do?',
       choices: [
         { name: 'Show release status', value: 'status' },
+        { name: 'What am I missing?', value: 'gaps' },
         { name: 'List releases for a subscription', value: 'list' },
         { name: 'Mark a release as already imported (backfill)', value: 'backfill' },
         { name: 'Mark a release as owned/downloaded (manual download)', value: 'manual' },
@@ -48,6 +49,28 @@ async function main(): Promise<void> {
     for (const sub of ['lootstudios', 'fleshofgods', 'rescale', 'dmstash']) {
       printStatus(sub)
     }
+    return
+  }
+
+  if (action === 'gaps') {
+    const SUBS = ['lootstudios', 'fleshofgods', 'rescale', 'dmstash']
+    const labels: Record<string, string> = {
+      lootstudios: 'Loot Studios',
+      fleshofgods: 'Flesh of Gods',
+      rescale: 'Rescale',
+      dmstash: 'DM Stash',
+    }
+    console.log()
+    let anyGaps = false
+    for (const sub of SUBS) {
+      const gaps = getGaps(sub)
+      if (gaps.length === 0) continue
+      anyGaps = true
+      console.log(`  ${labels[sub]}`)
+      for (const month of gaps) console.log(`    ? ${month}  — not imported`)
+      console.log()
+    }
+    if (!anyGaps) console.log('  All tracked subscriptions up to date.\n')
     return
   }
 

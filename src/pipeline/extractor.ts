@@ -1,5 +1,5 @@
 import { createReadStream } from 'node:fs'
-import { readdir, stat, mkdir, rm } from 'node:fs/promises'
+import { readdir, stat, mkdir, rm, cp } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import unzipper from 'unzipper'
@@ -29,16 +29,36 @@ export async function extractZip(inputPath: string): Promise<ExtractResult> {
       const tempDir = join(tmpdir(), `orynt3d-${Date.now()}`)
       await mkdir(tempDir, { recursive: true })
 
-      for (const zip of zips) {
+      for (let i = 0; i < zips.length; i++) {
+        const zip = zips[i]
+        process.stdout.write(`  Extracting ${i + 1}/${zips.length}: ${zip.name}...`)
         const zipPath = join(inputPath, zip.name)
         const destDir = join(tempDir, zip.name.replace(/\.zip$/i, ''))
         await mkdir(destDir, { recursive: true })
-        await new Promise<void>((resolve, reject) => {
-          createReadStream(zipPath)
-            .pipe(unzipper.Extract({ path: destDir }))
-            .on('close', resolve)
-            .on('error', reject)
-        })
+        try {
+          await new Promise<void>((resolve, reject) => {
+            createReadStream(zipPath)
+              .pipe(unzipper.Extract({ path: destDir }))
+              .on('close', resolve)
+              .on('error', reject)
+          })
+          console.log(' done')
+        } catch (err) {
+          // ZIP failed — check if a pre-extracted folder exists alongside it
+          const baseName = zip.name.replace(/\.zip$/i, '')
+          const preExtracted = join(inputPath, baseName)
+          let folderExists = false
+          try { folderExists = (await stat(preExtracted)).isDirectory() } catch { /* no folder */ }
+
+          if (folderExists) {
+            console.log(' failed (using pre-extracted folder)')
+            await cp(preExtracted, destDir, { recursive: true })
+          } else {
+            console.log(' FAILED')
+            await rm(tempDir, { recursive: true, force: true })
+            throw new Error(`Failed to extract ${zip.name} — file may be corrupt or incomplete. Extract it manually or re-download it and try again.\n  Cause: ${err}`)
+          }
+        }
       }
 
       return {

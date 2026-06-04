@@ -92,6 +92,41 @@ export function isPackProcessed(subscription: string, pack_name: string): boolea
   return !!(row?.processed_at)
 }
 
+/**
+ * Returns months with no processed release, from the earliest tracked month
+ * up to (but not including) the current month.
+ */
+export function getGaps(subscription: string): string[] {
+  const db = getDb()
+
+  const firstRow = db.prepare(`
+    SELECT MIN(release_month) as first FROM releases
+    WHERE subscription = ? AND release_month IS NOT NULL
+  `).get(subscription) as { first: string | null } | undefined
+  if (!firstRow?.first) return []
+
+  const processedMonths = new Set(
+    (db.prepare(`
+      SELECT DISTINCT release_month FROM releases
+      WHERE subscription = ? AND processed_at IS NOT NULL AND release_month IS NOT NULL
+    `).all(subscription) as { release_month: string }[]).map(r => r.release_month)
+  )
+
+  const gaps: string[] = []
+  const [sy, sm] = firstRow.first.split('-').map(Number)
+  const now = new Date()
+  const [ey, em] = [now.getFullYear(), now.getMonth() + 1] // current month excluded
+
+  let y = sy, m = sm
+  while (y < ey || (y === ey && m < em)) {
+    const key = `${y}-${String(m).padStart(2, '0')}`
+    if (!processedMonths.has(key)) gaps.push(key)
+    m++; if (m > 12) { m = 1; y++ }
+  }
+
+  return gaps
+}
+
 /** Returns owned releases not yet processed, ordered by month. */
 export function getPendingReleases(subscription: string): Release[] {
   const db = getDb()
