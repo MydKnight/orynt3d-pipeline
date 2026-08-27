@@ -2,6 +2,25 @@ import inquirer from 'inquirer'
 import { getAllReleases, markDownloaded, markOwned, markProcessed, upsertRelease, getStatusSummary, getGaps } from './db/releases.js'
 import { loadEnv } from './util/env.js'
 
+/**
+ * Subscriptions the tracker knows about. A subscription can be tracked here
+ * (ownership / download / import state, gap reports) before it has a pipeline
+ * profile. Keys must match the key a future profile would generate:
+ * `profile.name.toLowerCase().replace(/\s+/g, '')`.
+ */
+const SUBSCRIPTIONS: { key: string; label: string; hasProfile: boolean }[] = [
+  { key: 'lootstudios', label: 'Loot Studios', hasProfile: true },
+  { key: 'fleshofgods', label: 'Flesh of Gods', hasProfile: true },
+  { key: 'rescale', label: 'Rescale', hasProfile: true },
+  { key: 'dmstash', label: 'DM Stash', hasProfile: false },
+  { key: 'archvillaingames', label: 'Archvillain Games', hasProfile: false },
+]
+
+const SUB_KEYS = SUBSCRIPTIONS.map(s => s.key)
+const SUB_LABELS: Record<string, string> = Object.fromEntries(
+  SUBSCRIPTIONS.map(s => [s.key, s.label]),
+)
+
 function stateLabel(r: ReturnType<typeof getAllReleases>[0]): string {
   if (r.processed_at) return '✓ imported'
   if (r.downloaded_at) return '↓ downloaded'
@@ -46,27 +65,20 @@ async function main(): Promise<void> {
 
   if (action === 'status') {
     console.log()
-    for (const sub of ['lootstudios', 'fleshofgods', 'rescale', 'dmstash']) {
+    for (const sub of SUB_KEYS) {
       printStatus(sub)
     }
     return
   }
 
   if (action === 'gaps') {
-    const SUBS = ['lootstudios', 'fleshofgods', 'rescale', 'dmstash']
-    const labels: Record<string, string> = {
-      lootstudios: 'Loot Studios',
-      fleshofgods: 'Flesh of Gods',
-      rescale: 'Rescale',
-      dmstash: 'DM Stash',
-    }
     console.log()
     let anyGaps = false
-    for (const sub of SUBS) {
+    for (const sub of SUB_KEYS) {
       const gaps = getGaps(sub)
       if (gaps.length === 0) continue
       anyGaps = true
-      console.log(`  ${labels[sub]}`)
+      console.log(`  ${SUB_LABELS[sub]}`)
       for (const month of gaps) console.log(`    ? ${month}  — not imported`)
       console.log()
     }
@@ -80,7 +92,7 @@ async function main(): Promise<void> {
         type: 'list',
         name: 'subscription',
         message: 'Which subscription?',
-        choices: ['lootstudios', 'fleshofgods', 'rescale', 'dmstash'],
+        choices: SUB_KEYS,
       },
     ])
     const releases = getAllReleases(subscription)
@@ -100,7 +112,7 @@ async function main(): Promise<void> {
         type: 'list',
         name: 'subscription',
         message: 'Which subscription?',
-        choices: ['lootstudios', 'fleshofgods', 'rescale', 'dmstash'],
+        choices: SUB_KEYS,
       },
     ])
 
@@ -146,7 +158,7 @@ async function main(): Promise<void> {
         type: 'list',
         name: 'subscription',
         message: 'Which subscription?',
-        choices: ['lootstudios', 'fleshofgods', 'rescale', 'dmstash'],
+        choices: SUB_KEYS,
       },
       {
         type: 'input',
@@ -182,7 +194,7 @@ async function main(): Promise<void> {
         type: 'list',
         name: 'subscription',
         message: 'Which subscription?',
-        choices: ['lootstudios', 'fleshofgods', 'rescale', 'dmstash'],
+        choices: SUB_KEYS,
       },
     ])
     const all = getAllReleases(subscription).filter(r => r.owned !== 0)

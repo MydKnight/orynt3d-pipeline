@@ -16,8 +16,10 @@ sessions/
 # Generated import manifests (old Python script output)
 orynt3d_import.json
 
-# Pipeline database (local tracking state — not source)
-data/
+# Pipeline database -- committed as the backup of record for release tracking state.
+# Everything else under data/ (temp exports, scratch) stays ignored.
+data/*
+!data/pipeline.db
 
 # Saved browser sessions (contain auth cookies — never commit)
 .sessions/

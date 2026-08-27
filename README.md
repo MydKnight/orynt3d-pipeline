@@ -4,9 +4,9 @@ A subscription-aware file processing pipeline that takes raw 3D model subscripti
 
 ## Current Status
 
-**Active — v1 complete, running in production.**
+**Active — v1 + v2 complete, running in production.**
 
-Both v1 profiles (Loot Studios, Flesh of Gods) are implemented, tested, and verified against real downloads. Orynt3D migration to subscription-level sources is complete for both subscriptions.
+Three profiles (Loot Studios, Flesh of Gods, Rescale) are implemented, tested, and verified against real downloads. Orynt3D migration to subscription-level sources is complete. Release tracking (v2) is built (`npm run download`) but the DB is not yet populated -- backfilling historical imports is the next step.
 
 **Known gaps:** LootStudios downloads don't include model images — the pipeline prompts for a URL per model during tagging. Automating this (scraping the release page) is a planned v3 improvement.
 
@@ -60,9 +60,9 @@ Each subscription has a **profile** — a set of rules that teaches the pipeline
 |---|---|
 | Loot Studios | ✓ Active |
 | Flesh of Gods | ✓ Active |
-| Archvillain Games | Future |
-| DM Stash | Future |
-| Rescue Miniatures | Future |
+| Rescale | ✓ Active |
+| Archvillain Games | Release tracking only (no pipeline profile yet) |
+| DM Stash | Release tracking only (no pipeline profile yet) |
 | Witchsong Miniatures | Future |
 
 ## Setup
@@ -106,9 +106,10 @@ The tool prompts for a ZIP path (or pre-extracted folder) and which subscription
 - [x] `npm run download` tracker CLI — status, list, backfill historical imports, manual ownership
 
 **v3 — Automation**
+- [x] Rescale profile (folder-of-ZIPs extraction, single-model + pack pose variants)
 - [ ] Download automation — LootStudios (SPA + signed CDN URL, blocked), FoG direct site (investigate), DM Stash (own site, investigate)
 - [ ] LootStudios image automation (fetch render images from release page — currently manual URL-per-model)
-- [ ] Additional subscription profiles (Rescale, DM Stash, Archvillain Games, Witchsong Miniatures)
+- [ ] Additional subscription profiles (DM Stash, Archvillain Games, Witchsong Miniatures)
 
 **Future**
 - [ ] Orynt3D scan trigger (if API/CLI becomes available)
