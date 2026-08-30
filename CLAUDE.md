@@ -277,16 +277,17 @@ The existing `scripts/orynt3d_import_script.py` is reference material only — n
 - **MMF download automation** — MyMiniFactory subscription access (`is_bought=false` for club content) is not exposed in their public API. HTML pages are Cloudflare-blocked (TLS fingerprint mismatch). Downloads must be done manually via the MMF site. API-based discovery works fine.
 - **FoG direct site** — FoG releases are available on their own site as well as MMF. If MMF download automation stays blocked, the FoG direct site may be a viable alternative — investigate its structure and Cloudflare posture before building. Likely shares the same cookie-based auth pattern.
 - **DM Stash** — not on MyMiniFactory; has its own site. Needs a dedicated platform implementation. Investigate site structure and whether Cloudflare or similar bot protection is in use before building. Profile (`src/profiles/dmstash.ts`) also needed once download folder structure is known. Release tracking works today via `npm run download` (key `dmstash`).
-- **Archvillain Games** — pipeline profile (`src/profiles/archvillaingames.ts`) not yet built; needs a raw download tree to inspect first. Release tracking works today via `npm run download` (key `archvillaingames`).
+- **Resilient NAS write (v3)** — `reorganize()` copies straight to the NAS with no retry, trusts partial files on re-run, and is silent for the length of a multi-GB copy. A VPN drop mid-transfer loses the whole run. Spec drafted — see `docs/resilient-nas-write-spec.md` (stage local → `robocopy /Z` sync + `npm run sync` resume). Do not build ad hoc.
 - **FDM geometry** — FDM files are currently tagged `fdm` but it's unconfirmed whether they are geometrically identical to resin files or have different geometry. Low priority until FDM imports are more common.
 
 ## Next Actions
 
-1. **v3: Download automation investigation** — LootStudios direct site (SPA + signed CDN URL, needs a different approach); FoG direct site (alternative to MMF, investigate Cloudflare posture); DM Stash (own site, investigate separately)
-2. **v3: LootStudios tag extraction** — scrape `<div class="downloadTaxys">` per model card during download session
-3. **Archvillain first live run** — rename NAS `Archvillian Games` → `Archvillain Games`, re-point Orynt3D scan, then process the Dec 2025+ backlog through the new profile.
-4. **DM Stash profile** — needs a raw download tree first (own site, not MMF).
-5. **Gap-report skip marker** — optional: let a release be marked "creator skipped" so `getGaps` won't flag a genuinely-empty month as a false positive. Not currently needed (all tracked subs are gap-clean or the gaps are real).
+1. **Resilient NAS write (v3)** — spec drafted, `docs/resilient-nas-write-spec.md`. First acceptance test is the 2026-08-29 Empire of Sands partial write. Blocks the Archvillain live re-run.
+2. **Archvillain live re-run** — finish Empire of Sands (18/23 landed; Scarab 4 partial, Zealot 1-4 missing) once the resilient write lands, then work the Dec 2025+ backlog.
+3. **v3: Download automation investigation** — LootStudios direct site (SPA + signed CDN URL, needs a different approach); FoG direct site (alternative to MMF, investigate Cloudflare posture); DM Stash (own site, investigate separately)
+4. **v3: LootStudios tag extraction** — scrape `<div class="downloadTaxys">` per model card during download session
+5. **DM Stash profile** — needs a raw download tree first (own site, not MMF).
+6. **Gap-report skip marker** — optional: let a release be marked "creator skipped" so `getGaps` won't flag a genuinely-empty month as a false positive. Not currently needed (all tracked subs are gap-clean or the gaps are real).
 
 ## Orynt3D Migration (complete)
 
