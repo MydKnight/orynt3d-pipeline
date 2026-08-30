@@ -1,4 +1,6 @@
-import { resolve } from 'node:path'
+import { resolve, join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { rm } from 'node:fs/promises'
 import inquirer from 'inquirer'
 import { getProfileNames, getProfile } from './profiles/index.js'
 import { extractArchive } from './pipeline/extractor.js'
@@ -8,8 +10,11 @@ import { reviewConflicts } from './pipeline/reviewer.js'
 import { tagModels } from './pipeline/tagger.js'
 import { saveSession, loadSession, hasSession } from './pipeline/session.js'
 import { reorganize } from './pipeline/reorganizer.js'
+import { writeNasConfigs, syncToNas, stagingSize } from './pipeline/nas-sync.js'
 import { upsertRelease, markProcessed, getAllReleases, isPackProcessed } from './db/releases.js'
 import { loadEnv } from './util/env.js'
+
+const fmtGB = (bytes: number) => `${(bytes / 1e9).toFixed(1)} GB`
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -149,21 +154,49 @@ async function main(): Promise<void> {
       return
     }
 
-    // 8. Reorganize + write configs
-    console.log('\nWriting to NAS...')
-    const { written, errors } = await reorganize(finalModels, profile, nasRoot)
+    // 8a. Stage the organised tree locally
+    const stagingRoot = join(process.env.STAGING_PATH || tmpdir(), '.orynt-staging')
+    console.log('\nStaging locally...')
+    const { staged, incomplete, stagingRoot: stagedSubRoot } = await reorganize(finalModels, profile, stagingRoot)
 
-    console.log(`\nDone. ${written} models written.`)
-
-    if (errors.length > 0) {
-      console.log(`\n${errors.length} error(s):`)
-      for (const { model, error } of errors) {
-        console.log(`  ${model.modelName}: ${error}`)
+    if (incomplete.length > 0) {
+      console.log(`\n${incomplete.length} model(s) could not be staged completely:`)
+      for (const { model, failed } of incomplete) {
+        console.log(`  ${model}: ${failed.join('; ')}`)
       }
     }
 
+    // 8b. Subscription / pack configs go straight to the NAS (write-once)
+    console.log('\nWriting subscription + pack configs to NAS...')
+    await writeNasConfigs(finalModels, profile, nasRoot)
+
+    // 8c. Sync the staged tree to the NAS (robocopy restartable, or resilient fallback)
+    const { files, bytes } = await stagingSize(stagedSubRoot)
+    console.log(`\nSyncing to NAS — ${files} files, ${fmtGB(bytes)}...`)
+    const started = Date.now()
+    let sync
+    try {
+      sync = await syncToNas(stagedSubRoot, nasRoot, profile)
+    } catch (err) {
+      console.error(`\nSync failed: ${err}`)
+      console.error(`Staging kept at ${stagedSubRoot} — reconnect and run \`npm run sync\` to resume.`)
+      return
+    }
+    const mins = ((Date.now() - started) / 60000).toFixed(1)
+    console.log(`\nDone. ${staged}/${finalModels.length} models staged; ${sync.method} synced (${sync.copied} copied, ${sync.skipped} up to date) in ${mins}m.`)
+
+    // 8d. Offer to clear the local staging copy once everything is through
+    if (incomplete.length === 0) {
+      const { clean } = await inquirer.prompt<{ clean: boolean }>([
+        { type: 'confirm', name: 'clean', message: `Remove local staging copy at ${stagedSubRoot}?`, default: false },
+      ])
+      if (clean) await rm(stagedSubRoot, { recursive: true, force: true })
+    } else {
+      console.log(`\nStaging kept at ${stagedSubRoot} (incomplete models). Re-run or \`npm run sync\` after fixing.`)
+    }
+
     // 9. Mark release as processed in tracking DB
-    if (written > 0) {
+    if (staged > 0) {
       const packName = finalModels[0]?.packName ?? ''
 
       // Find unprocessed releases for this subscription — try to match by pack name

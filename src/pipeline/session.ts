@@ -2,7 +2,8 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ClassifiedModel } from '../profiles/types.js'
 
-const SESSIONS_DIR = 'sessions'
+// Read lazily and overridable, so tests never touch the real sessions/ directory.
+const sessionsDir = () => process.env.ORYNT_SESSIONS_DIR || 'sessions'
 
 interface SessionModel {
   key: string
@@ -24,7 +25,7 @@ function modelKey(m: ClassifiedModel): string {
 
 function sessionPath(zipPath: string): string {
   const zipName = zipPath.split(/[\\/]/).at(-1)!.replace(/\.(zip|rar)$/i, '')
-  return join(SESSIONS_DIR, `${zipName}.session.json`)
+  return join(sessionsDir(), `${zipName}.session.json`)
 }
 
 export async function saveSession(
@@ -44,7 +45,7 @@ export async function saveSession(
     })),
   }
   const path = sessionPath(zipPath)
-  await mkdir(SESSIONS_DIR, { recursive: true })
+  await mkdir(sessionsDir(), { recursive: true })
   await writeFile(path, JSON.stringify(session, null, 2), 'utf8')
   return path
 }

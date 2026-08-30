@@ -1,9 +1,14 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
-import { rm, mkdir, stat } from 'node:fs/promises'
-import { saveSession, loadSession, hasSession } from '../../src/pipeline/session.js'
+import { rm, mkdir, stat, mkdtemp } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type { ClassifiedModel } from '../../src/profiles/types.js'
 
-const SESSIONS_DIR = 'sessions'
+// Isolate from the real sessions/ directory -- the pipeline reads this env var.
+const SESSIONS_DIR = await mkdtemp(join(tmpdir(), 'sessions-'))
+process.env.ORYNT_SESSIONS_DIR = SESSIONS_DIR
+
+const { saveSession, loadSession, hasSession } = await import('../../src/pipeline/session.js')
 
 function model(overrides: Partial<ClassifiedModel> = {}): ClassifiedModel {
   return {

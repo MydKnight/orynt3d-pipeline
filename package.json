@@ -9,6 +9,7 @@
   "scripts": {
     "pipeline": "tsx src/cli.ts",
     "download": "tsx src/cli-download.ts",
+    "sync": "tsx src/cli-sync.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

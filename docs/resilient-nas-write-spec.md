@@ -1,6 +1,6 @@
 # Resilient NAS Write — Design Spec
 
-**Status:** Draft
+**Status:** Implemented
 **Target:** v3
 **Date:** 2026-08-30
 
@@ -120,14 +120,14 @@ cli.ts
 
 ## Build order
 
-1. `src/pipeline/resilient-copy.ts` + unit tests (acceptance #3)
-2. `reorganize()` → local staging via `resilientCopy`; signature change; `[n/total]` progress
-3. `writeNasConfigs()` — sub/pack configs direct to NAS, retrying
-4. `src/pipeline/nas-sync.ts` — robocopy wrapper, exit-code handling, output passthrough; fallback walker
-5. `cli.ts` wiring: stage → nas configs → sync; `--clean-staging`
-6. `npm run sync` standalone entry (`src/cli-sync.ts`)
-7. Acceptance #1 against the live partial state; #2; #4
-8. CLAUDE.md — architecture section, components table, new scripts; move `session.ts`-style note about reorganizer being testable now that it is local
+1. `src/pipeline/resilient-copy.ts` + 9 unit tests — Implemented 2026-08-30 (acceptance #3)
+2. `reorganize()` → local staging via `resilientCopy`; signature `(models, profile, stagingRoot)`; `[n/total]` progress; 5 unit tests — Implemented 2026-08-30
+3. `writeNasConfigs()` in `nas-sync.ts` — sub/pack configs direct to NAS, `retryTransient` — Implemented 2026-08-30
+4. `src/pipeline/nas-sync.ts` `syncToNas` — `robocopy /E /Z /FFT /R:10 /W:15`, exit-code handling, output passthrough; resilient tree-walk fallback; 3 unit tests — Implemented 2026-08-30
+5. `cli.ts` wiring: stage → NAS configs → sync; post-sync "remove staging?" prompt — Implemented 2026-08-30
+6. `npm run sync` standalone (`src/cli-sync.ts`) — Implemented 2026-08-30
+7. Acceptance #1 — covered by `nas-sync.test.ts` (degrade the dest, re-sync copies only the gaps); the live NAS run is the user's Archvillain re-run. #2/#4 covered by the idempotency + config-writer tests. Full-flow functional check 2026-08-30: real Empire of Sands sample (23 models / 126 files / 4.5 GB) staged, NAS configs written, robocopy synced, re-sync copied 0 skipped 126.
+8. CLAUDE.md — architecture, components table, Test Coverage Standard (reorganizer + resilient-copy + nas-sync now in scope, 90 tests / 10 files), `npm run sync` — Implemented 2026-08-30
 
 ## Out of scope
 
