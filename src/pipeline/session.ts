@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ClassifiedModel } from '../profiles/types.js'
 
@@ -23,7 +23,7 @@ function modelKey(m: ClassifiedModel): string {
 }
 
 function sessionPath(zipPath: string): string {
-  const zipName = zipPath.split(/[\\/]/).at(-1)!.replace(/\.zip$/i, '')
+  const zipName = zipPath.split(/[\\/]/).at(-1)!.replace(/\.(zip|rar)$/i, '')
   return join(SESSIONS_DIR, `${zipName}.session.json`)
 }
 
@@ -44,6 +44,7 @@ export async function saveSession(
     })),
   }
   const path = sessionPath(zipPath)
+  await mkdir(SESSIONS_DIR, { recursive: true })
   await writeFile(path, JSON.stringify(session, null, 2), 'utf8')
   return path
 }

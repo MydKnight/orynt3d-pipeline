@@ -50,13 +50,23 @@ export async function reorganize(
       // Copy images if the subscription includes them in model folders
       if (profile.includesImages) {
         const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp'])
-        const imgSrc = model.imageSourceFolder ?? model.sourceFolder
-        const entries = await readdir(imgSrc, { withFileTypes: true })
-        for (const entry of entries) {
-          if (!entry.isFile()) continue
-          const ext = entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase()
-          if (!IMAGE_EXTS.has(ext)) continue
-          await copy(join(imgSrc, entry.name), join(modelFolder, entry.name), { overwrite: false })
+        if (model.imageFiles !== undefined) {
+          // Curated list is authoritative — even when empty. Falling back to a
+          // folder scan here would copy other models' images (e.g. every pose's
+          // renders share one source folder).
+          for (const src of model.imageFiles) {
+            const filename = src.split(/[\\/]/).at(-1)!
+            await copy(src, join(modelFolder, filename), { overwrite: false })
+          }
+        } else {
+          const imgSrc = model.imageSourceFolder ?? model.sourceFolder
+          const entries = await readdir(imgSrc, { withFileTypes: true })
+          for (const entry of entries) {
+            if (!entry.isFile()) continue
+            const ext = entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase()
+            if (!IMAGE_EXTS.has(ext)) continue
+            await copy(join(imgSrc, entry.name), join(modelFolder, entry.name), { overwrite: false })
+          }
         }
       }
 

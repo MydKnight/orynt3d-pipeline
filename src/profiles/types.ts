@@ -35,6 +35,13 @@ export interface ClassifiedModel {
    * or at a parent level (e.g. shared Pack group image).
    */
   imageSourceFolder?: string
+  /**
+   * Explicit list of image file paths to copy into the model folder. Used when a
+   * single source folder holds images for several models (e.g. one render per pose)
+   * and a folder scan would copy the wrong ones. Takes precedence over
+   * imageSourceFolder / sourceFolder scanning.
+   */
+  imageFiles?: string[]
 }
 
 export interface ProfileFilter {

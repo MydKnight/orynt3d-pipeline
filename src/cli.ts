@@ -1,7 +1,7 @@
 import { resolve } from 'node:path'
 import inquirer from 'inquirer'
 import { getProfileNames, getProfile } from './profiles/index.js'
-import { extractZip } from './pipeline/extractor.js'
+import { extractArchive } from './pipeline/extractor.js'
 import { classify } from './pipeline/classifier.js'
 import { applyFilter } from './pipeline/filter.js'
 import { reviewConflicts } from './pipeline/reviewer.js'
@@ -24,12 +24,12 @@ async function main(): Promise<void> {
 
   console.log('\n=== orynt3d-pipeline ===\n')
 
-  // 1. ZIP path
+  // 1. Archive path
   const { zipPath } = await inquirer.prompt<{ zipPath: string }>([
     {
       type: 'input',
       name: 'zipPath',
-      message: 'Path to ZIP file or folder:',
+      message: 'Path to archive (ZIP/RAR) or folder:',
       validate: (v: string) => v.trim().length > 0 || 'Required',
     },
   ])
@@ -49,8 +49,8 @@ async function main(): Promise<void> {
 
   // 3. Extract
   const resolvedZipPath = resolve(zipPath.trim())
-  console.log('\nExtracting ZIP...')
-  const { extractedRoot, originalInputPath, cleanup } = await extractZip(resolvedZipPath)
+  console.log('\nExtracting...')
+  const { extractedRoot, originalInputPath, cleanup } = await extractArchive(resolvedZipPath)
 
   try {
     // 4. Classify

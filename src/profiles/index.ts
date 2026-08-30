@@ -1,12 +1,14 @@
 import { lootStudiosProfile } from './loot-studios.js'
 import { fleshOfGodsProfile } from './flesh-of-gods.js'
 import { rescaleProfile } from './rescale.js'
+import { archvillainGamesProfile } from './archvillain-games.js'
 import type { SubscriptionProfile } from './types.js'
 
 const profiles: SubscriptionProfile[] = [
   lootStudiosProfile,
   fleshOfGodsProfile,
   rescaleProfile,
+  archvillainGamesProfile,
 ]
 
 export function getProfileNames(): string[] {
