@@ -44,6 +44,12 @@ export interface ClassifiedModel {
   imageFiles?: string[]
 }
 
+export interface ClassifyResult {
+  models: ClassifiedModel[]
+  /** Folders the profile deliberately skipped because their structure was ambiguous. */
+  warnings: string[]
+}
+
 export interface ProfileFilter {
   /** Which support types to include in the output */
   include: SupportType[]
@@ -75,10 +81,12 @@ export interface SubscriptionProfile {
 
   /**
    * Walk the extracted download root folder and return a ClassifiedModel for every
-   * leaf model folder found. Unrecognised folders should be omitted and logged —
-   * the pipeline's review step handles the residue.
+   * leaf model folder found. A profile may return a bare array, or a
+   * {@link ClassifyResult} carrying `warnings` for folders it deliberately did
+   * not turn into models (unrecognised structure). The pipeline surfaces the
+   * warnings and asks before writing.
    */
-  classify(rootFolder: string, originalInputPath?: string): Promise<ClassifiedModel[]>
+  classify(rootFolder: string, originalInputPath?: string): Promise<ClassifiedModel[] | ClassifyResult>
 
   filter: ProfileFilter
 

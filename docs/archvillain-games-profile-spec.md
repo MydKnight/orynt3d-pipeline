@@ -99,39 +99,60 @@ The reorganizer, when `profile.includesImages` is true, copies `model.imageFiles
 
 ## classify() algorithm
 
+`classify()` returns `{ models, warnings }` — `warnings` lists folders it
+deliberately did not turn into models. `cli.ts` prints them and asks before
+writing (same gate as unclassified files).
+
+### Structure walk — shape-agnostic
+
+No per-release structure detection. One recursive rule finds the folders that
+hold model files, whatever the wrapper nesting (individual RAR → 1 wrapper;
+compilation RAR → 1–2 wrappers then one folder per model; old flat imports →
+release/model):
+
 ```
-packName = last path segment of originalInputPath ; scale = '32mm'
+modelFolders(dir):
+  hasModelFiles  = dir has an *.stl / *.3mf directly
+  modelSubdirs   = sub-folders that contain a model file at any depth
 
-for each top-level dir in rootFolder (one per extracted RAR):
-  wrapper = the single inner directory (ignoring __MACOSX; if >1, warn and take the first)
-  if wrapper has model files directly:
-    modelsFromFolder(wrapper)                    # individual-model archive
-  else:
-    for each subdirectory of wrapper:            # compilation archive
-      modelsFromFolder(subdirectory)
-    (no subdirectories → warn "no models" and skip)
+  hasModelFiles AND modelSubdirs  → warn "model files and also sub-folders …", skip
+  hasModelFiles                   → dir is a model folder
+  modelSubdirs                    → recurse into each
+  neither, but has sub-folders    → warn "sub-folders but none contain model files"
+  neither                         → warn "no model files"
+```
 
-modelsFromFolder(folder):
-  stls   = files matching /\.(stl|3mf)$/i  (this excludes LYS_*.lys)
-  images = files matching /\.(jpe?g|png|webp)$/i
-  base   = folder name minus trailing " - Presupported"
-  tag    = 'society' if an image name contains .AVS. ; 'bestiary' if .AVB. ; else none
+### modelsFromFolder(folder)
 
-  poseOf(f) = zero-padded two-digit pose token — trailing /(\d{2})$/ (images) or
-              segment /_(\d{2})(?=[_.])/ (STLs), else null. Exactly two digits, so a
-              stray single digit (`_v2`, `goat_1`, `CloseUp2`) is not a pose.
+```
+stls   = *.stl / *.3mf   (excludes LYS_*.lys)
+images = *.jpg/.jpeg/.png/.webp
+base   = folder name minus trailing " - Presupported"
+tag    = 'society' if an image name contains .AVS. ; 'bestiary' if .AVB. ; else none
 
-  if any stl has a pose number:
-    group stls by poseOf → one ClassifiedModel per pose:
+poseOf(f) = zero-padded two-digit token — trailing /(\d{2})$/ (images) or
+            segment /_(\d{2})(?=[_.])/ (STLs), else null. Exactly two digits, so a
+            stray single digit (_v2, goat_1, CloseUp2) is not a pose.
+
+numbered   = stls with a pose token
+unNumbered = stls without one
+parts      = unNumbered that are NOT a display base (name lacks "base")
+
+poses ≥ 2 AND parts.length < numbered.length  → multi-pose:
+    one ClassifiedModel per pose token n:
       modelName  = `${base} ${parseInt(n)}`
-      files      = that pose's stls
-      imageFiles = images whose pose token == n
+      files      = that pose's numbered stls  +  ALL unNumbered stls (shared bases)
+      imageFiles = images whose token == n    +  images with no token (group render)
       userTags   = [tag] or undefined
-    stls with no pose number → console.warn and skip (edge-case policy)
-  else:
-    one ClassifiedModel { modelName: base, files: all stls, imageFiles: all images,
-                          userTags: [tag] or undefined }
+
+otherwise → one model (single pose, or a kitbash centerpiece whose few numbered
+    part-options don't make it N poses): all stls, all images, [tag].
 ```
+
+The `parts.length < numbered.length` guard keeps a centerpiece assembled from many
+named parts (Khazrai: 3 numbered among ~45; Polystixis: `body_01`/`body_02` among
+~20) as one model, while `Oceanvoid Scion` (`body_01`, `body_02` + two shared
+bases → 0 parts, 2 numbered) splits into two, each carrying both bases.
 
 ## Extractor changes
 
@@ -160,7 +181,19 @@ New pipeline output then lands alongside the old manual imports under one correc
 6. Functional run against `Empire of Sands - Vault of the Scarab God` sample — Verified 2026-08-29: with all 7 archives (5 individual + Society Vol. LXII + Bestiary Vol. XXXVI) → 23 models: 17 from the themed pack (Khepresh kitbash / 11 STLs incl. HOLLOWED / 2 images; 4×4 poses / 3 STLs / 1 matched render) + 6 from the compilations (3 `bestiary`-tagged, 3 `society`-tagged)
 7. CLAUDE.md profile section + components table row — Implemented 2026-08-29
 
-Not yet done: NAS folder rename (done by user 2026-08-29) + first live pipeline run writing to the NAS (user action).
+NAS folder renamed + Empire of Sands imported (23 models) 2026-08-30.
+
+### Revision — 2026-08-31 (`fix/archvillain-classify`)
+
+High Seas - Tides of Madness surfaced two structures the first cut didn't handle:
+its Society RAR has a **doubled wrapper folder**, and `Oceanvoid Scion` is
+multi-pose with **shared bases**. Rewrote the structure walk to be recursive and
+shape-agnostic (descend through any wrapper depth), made un-numbered STLs shared
+across poses, added the kitbash guard, and had `classify()` return `warnings`
+that the CLI gates on. `tests/profiles/archvillain-structure.test.ts` locks in
+the Empire of Sands shape, the High Seas doubled-wrapper shape, shared-base
+splitting, the kitbash guard, and both fail-loud cases. Verified against the real
+High Seas download: 24 models (was 21), 0 warnings.
 
 ## Out of scope
 

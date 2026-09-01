@@ -6,6 +6,7 @@ import {
   isModelFile,
   isImageFile,
   provenanceTag,
+  isBaseFile,
 } from '../../src/profiles/archvillain-games.js'
 
 describe('stripPresupported', () => {
@@ -77,6 +78,15 @@ describe('isImageFile', () => {
     expect(isImageFile('render.png')).toBe(true)
     expect(isImageFile('STL_Zealot_01_supported.stl')).toBe(false)
     expect(isImageFile('LYS_Zealot_01_supported.lys')).toBe(false)
+  })
+})
+
+describe('isBaseFile', () => {
+  it('flags display-base STLs, not body parts', () => {
+    expect(isBaseFile('STL_Scion_base_scenic_supported.stl')).toBe(true)
+    expect(isBaseFile('STL_Scion_base_standard_supported.stl')).toBe(true)
+    expect(isBaseFile('STL_Khepresh_arm_l_supported.stl')).toBe(false)
+    expect(isBaseFile('STL_Khepresh_body_supported.stl')).toBe(false)
   })
 })
 

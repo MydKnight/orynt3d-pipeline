@@ -162,13 +162,13 @@ Each model card on the LootStudios bundle page (`/bundle/{slug}/`) contains a `<
 
 ### Archvillain Games (Profile #4 — Active)
 
-RAR archives (one per model, manually assembled into a release-named folder). Spec: `docs/archvillain-games-profile-spec.md`.
+RAR archives (themed pack + Society/Bestiary compilations), manually assembled into a release-named folder. Spec: `docs/archvillain-games-profile-spec.md`.
 
-- Each pose becomes its own model (`Vaultsworn Zealot 1..4`); kitbash centerpieces with no pose number stay one model.
-- Keeps every `STL_*.stl` incl. `HOLLOWED_` variants; skips `.lys`.
-- One render image per pose, matched on the numeric suffix (not the short name).
-- `scale` hardcoded `32mm`; category always prompted (hero / npc / monster / terrain / prop).
-- Requires the misspelled NAS folder `Archvillian Games` to be renamed to `Archvillain Games` (see spec).
+- `classify()` walks the tree with one recursive, shape-agnostic rule (descend through any wrapper depth to the folders that hold model files) and returns `{ models, warnings }`. It refuses to guess on ambiguous structure (folder with files *and* model sub-folders; dead ends) — `cli.ts` prints those warnings and gates the write.
+- Each pose becomes its own model (`Vaultsworn Zealot 1..4`); un-numbered STLs (shared bases) go into every pose; a kitbash guard keeps many-part centerpieces (Khazrai, Polystixis) as one model.
+- Society/Bestiary reprints tagged `society` / `bestiary` from the `AVS` / `AVB` render marker.
+- Keeps every `STL_*.stl` incl. `HOLLOWED_`; skips `.lys`. `scale` `32mm`; category always prompted.
+- `tests/profiles/archvillain-structure.test.ts` pins each real download shape (Empire of Sands, High Seas doubled-wrapper) — add a case there when a new structure turns up.
 
 ### Future profiles
 DM Stash, Witchsong Miniatures.
@@ -315,7 +315,7 @@ Do not accumulate edge-case handlers for one-off typos.
 
 **Exempt:** CLI entry points (`src/cli*.ts`), TUI stages (`tagger.ts`, `reviewer.ts`), and `extractor.ts` / `classifier.ts` — interactive or bound to the archive libraries, not unit-testable without heavy mocking that adds no real value.
 
-Current state: 90 tests across 10 files — all in-scope areas covered.
+Current state: 99 tests across 11 files — all in-scope areas covered.
 
 ## Development Workflow — Required Before Merging Any Feature Branch
 

@@ -60,7 +60,16 @@ async function main(): Promise<void> {
   try {
     // 4. Classify
     console.log('Classifying models...')
-    const { models } = await classify(extractedRoot, profile, originalInputPath)
+    const { models, warnings } = await classify(extractedRoot, profile, originalInputPath)
+
+    if (warnings.length > 0) {
+      console.log(`\n${warnings.length} folder(s) were NOT turned into models — the structure was ambiguous:`)
+      for (const w of warnings) console.log(`  - ${w}`)
+      const { proceed } = await inquirer.prompt<{ proceed: boolean }>([
+        { type: 'confirm', name: 'proceed', message: 'Continue with the models that were classified?', default: false },
+      ])
+      if (!proceed) { console.log('Cancelled — fix the folder(s) and re-run.'); return }
+    }
 
     const subscriptionKey = profile.name.toLowerCase().replace(/\s+/g, '')
 
