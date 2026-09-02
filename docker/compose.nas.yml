@@ -1,0 +1,44 @@
+# compose.nas.yml -- copy this whole `docker/` directory anywhere on the QNAP
+# (e.g. your docker-compose share) and run from inside it via SSH:
+#
+#   export GH_TOKEN=github_pat_...                  # fine-grained, contents:write
+#   export NAS_3DFILES="/share/CACHEDEV1_DATA/data/3D Files"
+#   export NAS_DOWNLOADS="/share/CACHEDEV1_DATA/data/downloads"
+#   docker compose -f compose.nas.yml build
+#   docker compose -f compose.nas.yml run --rm pipeline            # full import
+#   docker compose -f compose.nas.yml run --rm pipeline download   # tracker CLI
+#   docker compose -f compose.nas.yml run --rm pipeline sync       # resume a sync
+#
+# The container clones the repo itself, so nothing else from the repo is needed
+# here. See docs/nas-container-spec.md.
+
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: orynt3d-pipeline-nas
+    stdin_open: true          # the tagging TUI needs an interactive TTY;
+    tty: true                 # `docker compose run` attaches one.
+    environment:
+      GH_REPO: MydKnight/orynt3d-pipeline
+      GH_TOKEN: ${GH_TOKEN:?set GH_TOKEN}
+      TARGET_BRANCH: ${TARGET_BRANCH:-master}
+      GIT_NAME: ${GIT_NAME:-Shiloh Madsen}
+      GIT_EMAIL: ${GIT_EMAIL:-shiloh.madsen@gmail.com}
+      NAS_3D_FILES_PATH: /nas/3D Files
+      STAGING_PATH: /work/staging
+      TMPDIR: /work/tmp
+    volumes:
+      # TODO: confirm the real host paths on the QNAP
+      # (something like /share/CACHEDEV1_DATA/<share>/...).
+      - "${NAS_3DFILES:-/share/CACHEDEV1_DATA/data/3D Files}:/nas/3D Files:rw"
+      - "${NAS_DOWNLOADS:-/share/CACHEDEV1_DATA/data/downloads}:/downloads:ro"
+      - pipeline-repo:/repo
+      - pipeline-npm:/root/.npm
+      - pipeline-work:/work
+
+volumes:
+  pipeline-repo:
+  pipeline-npm:
+  pipeline-work:
