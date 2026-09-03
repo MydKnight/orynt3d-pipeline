@@ -112,16 +112,20 @@ GitHub **fine-grained PAT**, this repo only, `contents: write`. Passed as
 
 ### Workflow
 
+One-time: `cp .env.example .env` in the deploy folder, fill in `GH_TOKEN` and the
+two share paths, `docker compose -f compose.nas.yml build`.
+
 1. Download the release's archives, directly on the NAS where possible (QNAP
    Download Station from the signed URLs), else download on the PC and copy to
    the NAS `downloads` share once.
 2. `ssh` to the QNAP, `cd` to the deploy folder.
-3. `export GH_TOKEN=...` then
-   `docker compose -f compose.nas.yml run --rm pipeline`
+3. `docker compose -f compose.nas.yml run --rm pipeline` (compose reads `.env`).
 4. Prompt: archive path = `/downloads/<release>`.
 5. Tag interactively.
 6. Container writes to `/nas/3D Files/<subscription>/`, then commits + pushes
    `data/pipeline.db`.
+
+Credentials/config live in `.env` (gitignored); `.env.example` is committed.
 
 `docker compose ... run --rm pipeline download` and `... pipeline sync` for the
 tracker CLI and a sync-only resume.

@@ -1,16 +1,17 @@
 # compose.nas.yml -- copy this whole `docker/` directory anywhere on the QNAP
-# (e.g. your docker-compose share) and run from inside it via SSH:
+# (e.g. your docker-compose share). One-time setup:
 #
-#   export GH_TOKEN=github_pat_...                  # fine-grained, contents:write
-#   export NAS_3DFILES="/share/CACHEDEV1_DATA/data/3D Files"
-#   export NAS_DOWNLOADS="/share/CACHEDEV1_DATA/data/downloads"
+#   cp .env.example .env      # then edit .env with the real GH_TOKEN + share paths
 #   docker compose -f compose.nas.yml build
+#
+# Then, from inside this directory via SSH (docker compose reads .env automatically):
+#
 #   docker compose -f compose.nas.yml run --rm pipeline            # full import
 #   docker compose -f compose.nas.yml run --rm pipeline download   # tracker CLI
 #   docker compose -f compose.nas.yml run --rm pipeline sync       # resume a sync
 #
 # The container clones the repo itself, so nothing else from the repo is needed
-# here. See docs/nas-container-spec.md.
+# here. `.env` is gitignored. See docs/nas-container-spec.md.
 
 services:
   pipeline:
