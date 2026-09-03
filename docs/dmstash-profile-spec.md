@@ -1,8 +1,14 @@
 # DM Stash Profile -- Design Spec
 
-**Status:** Locked
+**Status:** Implemented
 **Target:** v3
 **Date:** 2026-09-02
+
+Implemented and verified live 2026-09-03 -- Schism of the Drow (Sep '26)
+processed through the NAS container: NPCs + Monsters + Terrain classified,
+"Vessels of Irinax" multi-figure split, 21 models written. The Sep '26 terrain
+ZIP used a `... Terrain Set - Name` name (category mid-string, not right after
+the 6-char prefix); `parseCategory` was loosened to accept it (commit 98f330d).
 
 ## Problem
 
