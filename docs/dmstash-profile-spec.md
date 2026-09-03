@@ -6,9 +6,15 @@
 
 Implemented and verified live 2026-09-03 -- Schism of the Drow (Sep '26)
 processed through the NAS container: NPCs + Monsters + Terrain classified,
-"Vessels of Irinax" multi-figure split, 21 models written. The Sep '26 terrain
-ZIP used a `... Terrain Set - Name` name (category mid-string, not right after
-the 6-char prefix); `parseCategory` was loosened to accept it (commit 98f330d).
+"Vessels of Irinax" multi-figure split, 21 models written.
+
+Naming/structure variants found in real downloads and handled:
+- `... Terrain Set - Name` -- category mid-string, not right after the 6-char
+  prefix (Schism of the Drow, 98f330d)
+- `SUPPORTED Monsters & Bust - ...` -- trailing "& Bust" before the " - "
+  separator (The Arcane University, e63ce28)
+- `{Name} - Supported/Supported/STL/...` -- a doubled wrapper folder; `stlDirFor`
+  now probes one level deeper (The Arcane University, Professor Margaux)
 
 ## Problem
 
@@ -143,7 +149,9 @@ for each top-level dir in rootFolder (one per extracted ZIP):
   support = category === 'Terrain' ? 'FDM' : 'ReadyToSlice'
 
   for each sub-directory of the ZIP dir (model folders; loose files ignored):
-    stlDir = <model>/STL  ||  <model>/'Unsupported (FDM)'  ||  <model>   (first that has *.stl)
+    stlDir = <model>/STL || <model>/'Unsupported (FDM)'
+             || <model>/*/STL || <model>/*/'Unsupported (FDM)'   (double-wrap)
+             || <model>                                          (first that has *.stl)
     stls   = *.stl in stlDir, kept only if scale-32 (starts "32_" or no "<num>_" prefix)
     images = *.jpg/.jpeg/.png/.webp directly in <model>
     unit   = model folder name minus " - Supported" / "Terrain - "

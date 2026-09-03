@@ -95,11 +95,27 @@ interface ModelCtx {
   packName: string
 }
 
-/** Find the folder that holds the STL files: STL/, "Unsupported (FDM)/", or the model folder itself. */
+/**
+ * Find the folder that holds the STL files: STL/, "Unsupported (FDM)/", or the
+ * model folder itself. DM Stash occasionally double-wraps a model
+ * ("Professor Margaux - Supported/Supported/STL/..."), so if the direct probes
+ * miss, look one wrapper level deeper before giving up.
+ */
 async function stlDirFor(modelPath: string): Promise<string> {
-  for (const candidate of ['STL', 'Unsupported (FDM)']) {
+  const CANDIDATES = ['STL', 'Unsupported (FDM)']
+  const hasModels = async (p: string) =>
+    (await entriesOf(p)).some(e => e.isFile() && isModelFile(e.name))
+
+  for (const candidate of CANDIDATES) {
     const p = join(modelPath, candidate)
-    if ((await entriesOf(p)).some(e => e.isFile() && isModelFile(e.name))) return p
+    if (await hasModels(p)) return p
+  }
+  for (const sub of await entriesOf(modelPath)) {
+    if (!sub.isDirectory()) continue
+    for (const candidate of CANDIDATES) {
+      const p = join(modelPath, sub.name, candidate)
+      if (await hasModels(p)) return p
+    }
   }
   return modelPath
 }

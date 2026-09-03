@@ -115,6 +115,23 @@ describe('dmstash classify — structure', () => {
     expect(files(r, "Rapunzel's Cursed Tower").length).toBe(2)
   })
 
+  it('double-wrapped model: "{Name} - Supported/Supported/STL/..." still classifies', async () => {
+    const base = `${NPC_ZIP}/Professor Margaux - Supported`
+    await tree(
+      `${base}/Professor Margaux.jpg`,
+      `${base}/Supported/STL/32_Supported_Margaux_Base.stl`,
+      `${base}/Supported/STL/32_Supported_Margaux_Body.stl`,
+      `${base}/Supported/STL/75_Supported_Margaux_Body.stl`,
+    )
+    const r = await run()
+    expect(r.warnings).toEqual([])
+    expect(names(r)).toEqual(['Professor Margaux'])
+    expect(files(r, 'Professor Margaux')).toEqual([
+      '32_Supported_Margaux_Base.stl', '32_Supported_Margaux_Body.stl',
+    ])
+    expect(model(r, 'Professor Margaux').imageFiles.length).toBe(1)
+  })
+
   it('warns on an archive whose name has no recognised category', async () => {
     await tree('AbCdEf-Vehicles - Whatever/Car - Supported/STL/32_Supported_Car_Body.stl')
     const r = await run()

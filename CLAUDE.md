@@ -177,7 +177,7 @@ RAR archives (themed pack + Society/Bestiary compilations), manually assembled i
 Folder of ZIPs, one per category. Spec: `docs/dmstash-profile-spec.md`.
 
 - Category from the ZIP filename (`SUPPORTED NPCs` / `SUPPORTED Monsters` / `Terrain`, or a `... Terrain Set - Name` form); tolerates a `(1)` browser suffix. NPCs prompt hero/npc, Monsters auto `monster`, Terrain auto `terrain`.
-- Model folder `{Name} - Supported/` with an `STL/` subdir (or `Unsupported (FDM)/` for terrain) and one render.
+- Model folder `{Name} - Supported/` with an `STL/` subdir (or `Unsupported (FDM)/` for terrain) and one render. `stlDirFor` also probes one wrapper level deeper for the occasional double-wrap (`{Name} - Supported/Supported/STL/`).
 - 32mm only — drop `75_*` files, keep prefix-less (`BUST_*`).
 - Multi-figure folders (`Undead Dwarven Brothers` → Brook/Crook/…) split by the name token before `_Body`.
 - Terrain → `supportType: FDM`, `filter.includeFDM: true`, tagged `fdm` + `terrain`.
