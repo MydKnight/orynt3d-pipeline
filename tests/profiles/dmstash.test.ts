@@ -14,6 +14,10 @@ describe('parseCategory', () => {
     expect(parseCategory("Sa2oLh-Terrain - Rapunzel's Cursed Tower")).toBe('Terrain')
   })
 
+  it('reads a "... Terrain Set - Name" style terrain ZIP', () => {
+    expect(parseCategory("4S2Bk3-DM Stash Sep _'26 Terrain Set - Shrine to Irinax")).toBe('Terrain')
+  })
+
   it('tolerates a browser (1) suffix', () => {
     expect(parseCategory("LYbuKE-SUPPORTED Monsters - DM Stash Aug _'26 Release - The Tales Grimm(1)")).toBe('Monsters')
   })
