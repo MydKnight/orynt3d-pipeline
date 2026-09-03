@@ -12,12 +12,13 @@ const IMAGE_EXTS = /\.(jpe?g|png|webp)$/i
  *   "DpkD7R-SUPPORTED NPCs - DM Stash Aug _'26 Release - The Tales Grimm"
  *   "Sa2oLh-Terrain - Rapunzel's Cursed Tower"
  *   "4S2Bk3-DM Stash Sep _'26 Terrain Set - Shrine to Irinax"
- * A random 6-char prefix, then the category word (NPCs / Monsters / Terrain)
- * as the segment right before " - ", optionally with a "SUPPORTED " prefix or
- * a " Set" suffix. Browser (N) suffixes are tolerated.
+ *   "OvbRiA-SUPPORTED Monsters & Bust - DM Stash June _'26 Release - ..."
+ * A random 6-char prefix, then the category word (NPCs / Monsters / Terrain),
+ * optionally with a "SUPPORTED " prefix and/or trailing words (" Set",
+ * " & Bust"), then " - ". Browser (N) suffixes are tolerated.
  */
 export function parseCategory(zipName: string): 'NPCs' | 'Monsters' | 'Terrain' | null {
-  const m = zipName.match(/^[A-Za-z0-9]{6}-.*?\b(?:SUPPORTED\s+)?(NPCs|Monsters|Terrain)(?:\s+Set)?\s+-\s+/i)
+  const m = zipName.match(/^[A-Za-z0-9]{6}-.*?\b(?:SUPPORTED\s+)?(NPCs|Monsters|Terrain)\b[^-]*-\s+/i)
   if (!m) return null
   const c = m[1].toLowerCase()
   return c === 'npcs' ? 'NPCs' : c === 'monsters' ? 'Monsters' : 'Terrain'
