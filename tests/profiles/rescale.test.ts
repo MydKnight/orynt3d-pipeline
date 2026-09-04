@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseCaseName, extractModelName, extractPoseName, isSharedBaseFolder } from '../../src/profiles/rescale.js'
+import { parseCaseName, extractModelName, extractPoseName, isSharedBaseFolder, hasOwnBaseFile } from '../../src/profiles/rescale.js'
 
 describe('parseCaseName', () => {
   it('splits standard PascalCase', () => {
@@ -55,5 +55,18 @@ describe('isSharedBaseFolder', () => {
   it('leaves real pose folders alone', () => {
     expect(isSharedBaseFolder('BlizzardTroll_Stand_Supports')).toBe(false)
     expect(isSharedBaseFolder('VargirMage_CastingSpell_Supports')).toBe(false)
+  })
+})
+
+describe('hasOwnBaseFile', () => {
+  it('detects a pose that ships its own base geometry', () => {
+    expect(hasOwnBaseFile([
+      'C:/x/KnightOfValor_StandSword_Base_Sup.stl',
+      'C:/x/KnightOfValor_StandSword_Full_Sup.stl',
+    ])).toBe(true)
+  })
+
+  it('returns false for a pose with no base of its own', () => {
+    expect(hasOwnBaseFile(['C:/x/KnightOfValor_AttackHammer_Full_Sup.stl'])).toBe(false)
   })
 })

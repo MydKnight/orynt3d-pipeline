@@ -94,6 +94,17 @@ export function isSharedBaseFolder(poseFolderName: string): boolean {
 }
 
 /**
+ * Some poses within a pack already ship their own base geometry
+ * (e.g. "KnightOfValor_StandSword_Base_Sup.stl" alongside "..._Full_Sup.stl")
+ * -- others rely on the pack's shared Base folder. Only merge the shared base
+ * into a pose that doesn't already have one, or the pose ends up with two
+ * base meshes.
+ */
+export function hasOwnBaseFile(files: string[]): boolean {
+  return files.some(f => /(?:^|_)Base(?:_|\.)/i.test(f.split(/[\\/]/).at(-1) ?? ''))
+}
+
+/**
  * Find the image source folder for a model folder.
  * Checks Renders/ subfolder first (single models), then the folder itself (Pack group image).
  * Returns the folder that actually contains images, or null if none found.
@@ -214,7 +225,7 @@ export const rescaleProfile: SubscriptionProfile = {
             modelName: poseName,
             supportType: 'ReadyToSlice',
             sourceFolder: posePath,
-            files: [...files, ...baseFiles],
+            files: hasOwnBaseFile(files) ? files : [...files, ...baseFiles],
             imageSourceFolder: groupImageFolder,
           })
         }

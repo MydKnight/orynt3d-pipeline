@@ -36,6 +36,26 @@ describe('rescale classify -- structure', () => {
     expect(fileNames(models, 'Pestilent Brute Attack')).toEqual(['Attack.stl', 'Base.stl'])
   })
 
+  it('a pose that already ships its own base is not given the shared base too', async () => {
+    const wrapper = 'KnightOfValor/KnightOfValor'
+    await tree(
+      `${wrapper}/KnightOfValor_Base_Supports/Supported/KnightOfValor_Base_Sup.stl`,
+      `${wrapper}/KnightOfValor_AttackHammer_Supports/Supported/KnightOfValor_AttackHammer_Full_Sup.stl`,
+      `${wrapper}/KnightOfValor_StandSword_Supports/Supported/KnightOfValor_StandSword_Base_Sup.stl`,
+      `${wrapper}/KnightOfValor_StandSword_Supports/Supported/KnightOfValor_StandSword_Full_Sup.stl`,
+    )
+    const models = await run()
+    expect(names(models)).toEqual(['Knight Of Valor Attack Hammer', 'Knight Of Valor Stand Sword'])
+    // no own base -> gets the shared one
+    expect(fileNames(models, 'Knight Of Valor Attack Hammer')).toEqual([
+      'KnightOfValor_AttackHammer_Full_Sup.stl', 'KnightOfValor_Base_Sup.stl',
+    ])
+    // already has its own base -> shared base NOT added
+    expect(fileNames(models, 'Knight Of Valor Stand Sword')).toEqual([
+      'KnightOfValor_StandSword_Base_Sup.stl', 'KnightOfValor_StandSword_Full_Sup.stl',
+    ])
+  })
+
   it('a pack with no Base folder is unaffected', async () => {
     const wrapper = 'BlizzardTroll/BlizzardTroll'
     await tree(
