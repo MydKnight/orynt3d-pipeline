@@ -156,7 +156,7 @@ Each model card on the LootStudios bundle page (`/bundle/{slug}/`) contains a `<
 
 - Each extracted ZIP contains exactly one inner wrapper folder.
 - **Single model:** wrapper holds a `Supported/` subfolder (STL/3MF inside) or flat files with `_Sup.stl` / `_Bef.stl` suffixes. `_Bef` (Beefed) variants are skipped; `_Sup` are kept.
-- **Pack:** wrapper holds multiple `{Name}_Supports/` pose subfolders — one `ClassifiedModel` per pose.
+- **Pack:** wrapper holds multiple `{Name}_Supports/` pose subfolders — one `ClassifiedModel` per pose. A `..._Base_Supports/` folder is shared geometry, not a pose — it doesn't get its own model; its files are merged into every real pose's file list (`isSharedBaseFolder`).
 - Pack name: last path segment of the original input folder. Scale: hardcoded `32mm`.
 - Model name: PascalCase-split of the ZIP/folder base name, stripping `Pack` prefix and `_Supports` suffix.
 - Images: `includesImages: true` — copied from a `Renders/` subfolder or the wrapper folder itself (pack group image).
@@ -340,7 +340,7 @@ Do not accumulate edge-case handlers for one-off typos.
 
 **Exempt:** CLI entry points (`src/cli*.ts`), TUI stages (`tagger.ts`, `reviewer.ts`), and `extractor.ts` / `classifier.ts` — interactive or bound to the archive libraries, not unit-testable without heavy mocking that adds no real value.
 
-Current state: 125 tests across 14 files — all in-scope areas covered.
+Current state: 131 tests across 15 files — all in-scope areas covered.
 
 ## Development Workflow — Required Before Merging Any Feature Branch
 

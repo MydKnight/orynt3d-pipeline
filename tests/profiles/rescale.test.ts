@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseCaseName, extractModelName, extractPoseName } from '../../src/profiles/rescale.js'
+import { parseCaseName, extractModelName, extractPoseName, isSharedBaseFolder } from '../../src/profiles/rescale.js'
 
 describe('parseCaseName', () => {
   it('splits standard PascalCase', () => {
@@ -43,5 +43,17 @@ describe('extractPoseName', () => {
 
   it('handles multi-word pose names', () => {
     expect(extractPoseName('VargirMage_CastingSpell_Supports')).toBe('Vargir Mage Casting Spell')
+  })
+})
+
+describe('isSharedBaseFolder', () => {
+  it('recognises a "_Base_Supports" pose folder as a shared base', () => {
+    expect(isSharedBaseFolder('PestilentBrute_Base_Supports')).toBe(true)
+    expect(isSharedBaseFolder('Base_Supports')).toBe(true)
+  })
+
+  it('leaves real pose folders alone', () => {
+    expect(isSharedBaseFolder('BlizzardTroll_Stand_Supports')).toBe(false)
+    expect(isSharedBaseFolder('VargirMage_CastingSpell_Supports')).toBe(false)
   })
 })

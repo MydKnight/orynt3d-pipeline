@@ -84,6 +84,16 @@ async function getModelFiles(modelFolder: string): Promise<string[]> {
 }
 
 /**
+ * Rescale packs sometimes ship a shared base as its own pose-shaped folder,
+ * e.g. "PestilentBrute_Base_Supports" alongside the real pose folders. It is
+ * not a standalone pose -- it's geometry meant to be combined with every
+ * pose -- so it must not become its own model tile.
+ */
+export function isSharedBaseFolder(poseFolderName: string): boolean {
+  return /(?:^|_)Base_Supports$/i.test(poseFolderName)
+}
+
+/**
  * Find the image source folder for a model folder.
  * Checks Renders/ subfolder first (single models), then the folder itself (Pack group image).
  * Returns the folder that actually contains images, or null if none found.
@@ -175,7 +185,20 @@ export const rescaleProfile: SubscriptionProfile = {
         // ── Pack — multiple pose variants ─────────────────────────────────────
         const groupImageFolder = await findImageFolder(innerPath) ?? undefined
 
-        for (const poseEntry of poseSubfolders) {
+        // A "Base" folder is shared geometry, not its own pose -- fold its
+        // files into every real pose instead of giving it a model tile.
+        const baseFolders = poseSubfolders.filter(e => isSharedBaseFolder(e.name))
+        const realPoses = poseSubfolders.filter(e => !isSharedBaseFolder(e.name))
+
+        const baseFiles: string[] = []
+        for (const baseEntry of baseFolders) {
+          baseFiles.push(...await getModelFiles(join(innerPath, baseEntry.name)))
+        }
+        if (baseFolders.length > 0 && realPoses.length === 0) {
+          console.warn(`[Rescale] Only a shared Base/ folder found, no real poses, in: ${topEntry.name} -- skipped`)
+        }
+
+        for (const poseEntry of realPoses) {
           const posePath = join(innerPath, poseEntry.name)
           const poseName = extractPoseName(poseEntry.name)
           const files = await getModelFiles(posePath)
@@ -191,7 +214,7 @@ export const rescaleProfile: SubscriptionProfile = {
             modelName: poseName,
             supportType: 'ReadyToSlice',
             sourceFolder: posePath,
-            files,
+            files: [...files, ...baseFiles],
             imageSourceFolder: groupImageFolder,
           })
         }
